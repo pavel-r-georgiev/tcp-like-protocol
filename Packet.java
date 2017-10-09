@@ -8,7 +8,7 @@ public class Packet {
     private byte[] buffer;
     public static final int PACKET_DATA_SIZE = 1024;
     public static final int PACKET_HEADER_SIZE = 3;
-    public static final int PACKET_BUFFER_SIZE = PACKET_HEADER_SIZE + PACKET_DATA_SIZE ;
+    public static final int PACKET_BUFFER_SIZE = PACKET_HEADER_SIZE + PACKET_DATA_SIZE;
 
 
     public Packet(){
@@ -31,7 +31,7 @@ public class Packet {
         }
 
 //        Transfer data into packet buffer
-        for(int i = 0; i < data.length; i++){
+        for(int i = 0; i < Math.min(PACKET_BUFFER_SIZE,data.length); i++){
             buffer[i + 3] = data[i];
         }
     }
@@ -50,6 +50,7 @@ public class Packet {
     }
 
     public int getSequenceNumber() {
+//        Reconstructs the sequence number from the buffer
         return (int) (buffer[1] << 8 | buffer[0]);
     }
 }
