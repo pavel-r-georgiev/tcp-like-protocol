@@ -1,8 +1,6 @@
-import sun.security.x509.IPAddressName;
-
+/* Pavel Georgiev s1525701 */
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.*;
 
@@ -41,13 +39,13 @@ public class Sender1a {
             byte[] data = new byte[1024];
             fileStream.read(data);
             Packet packet = new Packet(data, sequenceNumber, endOfFile);
-            DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBuffer().length, IPAddress, port);
+            DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_BUFFER_SIZE, IPAddress, port);
 
 //            Send the packet and increment indices
             clientSocket.send(sendPacket);
             sequenceNumber++;
             position += 1024;
-
+//            Sleep for 10ms to avoid queue overflow
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e){

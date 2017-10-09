@@ -1,12 +1,18 @@
+/* Pavel Georgiev s1525701 */
+import java.util.Arrays;
+
 /**
  * Created by Pavel on 08/10/2017.
  */
 public class Packet {
     private byte[] buffer;
-    public static final int PACKET_SIZE = 1027;
+    public static final int PACKET_DATA_SIZE = 1024;
+    public static final int PACKET_HEADER_SIZE = 3;
+    public static final int PACKET_BUFFER_SIZE = PACKET_HEADER_SIZE + PACKET_DATA_SIZE ;
+
 
     public Packet(){
-        this.buffer = new byte[PACKET_SIZE];
+        this.buffer = new byte[PACKET_BUFFER_SIZE];
     }
 
     public Packet(byte[] buffer){
@@ -32,6 +38,15 @@ public class Packet {
 
     public byte[] getBuffer() {
         return buffer;
+    }
+
+    public byte[] getData() { return Arrays.copyOfRange(buffer, PACKET_HEADER_SIZE, PACKET_BUFFER_SIZE); }
+
+    public boolean isLastPacket() {
+        if(buffer[2] == 1){
+            return true;
+        }
+        return false;
     }
 
     public int getSequenceNumber() {

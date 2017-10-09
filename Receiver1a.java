@@ -1,23 +1,44 @@
+/* Pavel Georgiev s1525701 */
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.SocketException;
+
 
 public class Receiver1a {
 
-    public static void main(String[] args) throws SocketException {
+    public static void main(String[] args) throws IOException {
+//        Get port and filename from command line arguments
         final int port = Integer.parseInt(args[0]);
         final String filename = args[2];
 
-        File file = receiveFile(port, filename);
+       receiveFile(port, filename);
 
     }
 
-    public static File receiveFile(int port, String filename) throws SocketException {
+    public static void receiveFile(int port, String filename) throws IOException {
         DatagramSocket serverSocket = new DatagramSocket(port);
-        Packet packet = new Packet();
-        byte[] packetBuffer = new byte[1027];
+        File file = new File(filename);
+        FileOutputStream fileOutputStream = new FileOutputStream(file);
 
-        serverSocket.receive();
+        boolean endOfFile = false;
+
+        while(!endOfFile){
+            Packet packet = new Packet();
+            DatagramPacket receivePacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_BUFFER_SIZE);
+            serverSocket.receive(receivePacket);
+            fileOutputStream.write(packet.getData());
+
+            if(packet.isLastPacket()){
+                endOfFile = true;
+                fileOutputStream.close();
+                serverSocket.close();
+            }
+
+        }
+
 
     }
 }
