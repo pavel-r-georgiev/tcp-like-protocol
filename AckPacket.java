@@ -1,3 +1,8 @@
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+
 public class AckPacket {
     private byte[] buffer;
     public static final int ACK_BUFFER_LENGTH = 2;
@@ -19,5 +24,10 @@ public class AckPacket {
 
     public byte[] getBuffer() {
         return buffer;
+    }
+
+    public void sendAck(InetAddress IPAddress, int port, DatagramSocket socket) throws IOException {
+        DatagramPacket ackPacket = new DatagramPacket(buffer, ACK_BUFFER_LENGTH, IPAddress, port);
+        socket.send(ackPacket);
     }
 }
