@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.*;
+import java.util.Arrays;
 
 /**
  * Created by Pavel on 08/10/2017.
@@ -10,6 +11,9 @@ import java.net.*;
 public class Sender1a {
 
     public static void main(String[] args) throws IOException {
+        if(args.length != 3){
+            System.err.println("Run with arguments <RemoteHost> <Port> <Filename>.");
+        }
 //        Get host, port and filename from command line arguments
         final String remoteHost = args[0];
         final int port =  Integer.parseInt(args[1]);
@@ -32,19 +36,25 @@ public class Sender1a {
 
         while(!endOfFile){
 //            Check if this is last packet of the file
-            if(position >= file.length() - 1024){
+            int bytesLeft = (int)(file.length() - position);
+            if(bytesLeft <= 1024){
                 endOfFile = true;
             }
+
+//            If it is last packet reduce buffer size
+            int dataSize = endOfFile ? bytesLeft : Packet.PACKET_DEFAULT_DATA_SIZE;
+
 //            Read from file and construct a packet to be sent
-            byte[] data = new byte[1024];
+            byte[] data = new byte[dataSize];
             fileStream.read(data);
             Packet packet = new Packet(data, sequenceNumber, endOfFile);
-            DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_BUFFER_SIZE, IPAddress, port);
+            DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
 
 //            Send the packet and increment indices
             clientSocket.send(sendPacket);
             sequenceNumber++;
             position += 1024;
+
 //            Sleep for 10ms to avoid queue overflow
             try {
                 Thread.sleep(10);

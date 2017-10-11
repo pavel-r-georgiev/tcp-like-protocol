@@ -31,7 +31,7 @@ public class Receiver1b {
         while(!endOfFile){
 //            Create a new packet and put the data received in it
             Packet packet = new Packet();
-            DatagramPacket receivePacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_BUFFER_SIZE);
+            DatagramPacket receivePacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_DEFAULT_BUFFER_SIZE);
             serverSocket.receive(receivePacket);
             InetAddress IPAddress = serverSocket.getInetAddress();
             int clientPort = serverSocket.getPort();

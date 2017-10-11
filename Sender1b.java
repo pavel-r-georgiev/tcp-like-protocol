@@ -40,7 +40,7 @@ public class Sender1b {
             byte[] data = new byte[1024];
             fileStream.read(data);
             Packet packet = new Packet(data, sequenceNumber, endOfFile);
-            DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_BUFFER_SIZE, IPAddress, port);
+            DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_DEFAULT_BUFFER_SIZE, IPAddress, port);
 
             boolean correctAckReceived = false;
 
