@@ -20,6 +20,8 @@ public class Receiver1a {
 //        Store incoming packets to a file
        receiveFile(port, filename);
 
+       System.out.println("File received successfully and saved as " + filename + ".");
+
     }
 
     public static void receiveFile(int port, String filename) throws IOException {
@@ -35,6 +37,7 @@ public class Receiver1a {
             Packet packet = new Packet();
             DatagramPacket receivePacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_DEFAULT_BUFFER_SIZE);
             serverSocket.receive(receivePacket);
+            System.out.println("Packet received: # " + packet.getSequenceNumber());
 
 //            Get the true length of data received and write the data to the file output stream after stripping away the header and EoF bits.
             int dataLength = receivePacket.getLength();

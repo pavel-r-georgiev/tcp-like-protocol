@@ -23,6 +23,8 @@ public class Sender1a {
         File file = new File(filename);
 
         sendFile(IPAddress, port, file);
+
+        System.out.println("File " + filename + " sent successfully.");
     }
 
     private static void sendFile(InetAddress IPAddress, int port, File file) throws IOException {

@@ -12,6 +12,7 @@ public class AckPacket {
     }
 
     public AckPacket(int sequenceNumber){
+        this();
 //       Store sequence number based in header
         this.buffer[0] = (byte) (sequenceNumber & 0xFF);
         this.buffer[1] = (byte) ((sequenceNumber >> 8) & 0xFF);

@@ -10,8 +10,8 @@ public class Packet {
     public static final int PACKET_HEADER_SIZE = 3;
     public static final int PACKET_DEFAULT_DATA_SIZE = 1024;
     public static final int PACKET_DEFAULT_BUFFER_SIZE = PACKET_DEFAULT_DATA_SIZE + PACKET_HEADER_SIZE;
-    private int PACKET_DATA_SIZE;
-    private int PACKET_BUFFER_SIZE;
+    private int PACKET_DATA_SIZE = PACKET_DEFAULT_DATA_SIZE;
+    private int PACKET_BUFFER_SIZE = PACKET_DEFAULT_BUFFER_SIZE;
 
 
     public Packet(){
@@ -49,6 +49,7 @@ public class Packet {
     }
 
     public byte[] getData() {
+//        Returns the whole data part of the buffer
         return Arrays.copyOfRange(buffer, PACKET_HEADER_SIZE, this.getBufferSize());
     }
 
