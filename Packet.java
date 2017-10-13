@@ -34,8 +34,8 @@ public class Packet {
         }
 
 //       Store sequence number based in header
-        buffer[0] = (byte) (sequenceNumber & 0xFF);
-        buffer[1] = (byte) ((sequenceNumber >> 8) & 0xFF);
+        buffer[0] = (byte) ((sequenceNumber >> 8) & 0xFF);
+        buffer[1] = (byte) (sequenceNumber & 0xFF);
 
 
 //        Transfer data into packet buffer
@@ -71,6 +71,6 @@ public class Packet {
 
     public int getSequenceNumber() {
 //        Reconstructs the sequence number from the buffer
-        return (int) (buffer[1] << 8 | buffer[0]);
+        return (int) ((buffer[0] & 0xFF) << 8 | (buffer[1] & 0xFF));
     }
 }

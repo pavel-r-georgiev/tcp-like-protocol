@@ -80,7 +80,7 @@ public class Sender1b {
                 }
             }
 
-            sequenceNumber++;
+            sequenceNumber = (sequenceNumber + 1) % 2;
             position += 1024;
         }
 

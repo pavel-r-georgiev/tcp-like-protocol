@@ -35,12 +35,12 @@ public class Receiver1a {
         while(!endOfFile){
 //            Create a new packet and put the data received in it
             Packet packet = new Packet();
-            DatagramPacket receivePacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_DEFAULT_BUFFER_SIZE);
-            serverSocket.receive(receivePacket);
+            DatagramPacket receivedPacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_DEFAULT_BUFFER_SIZE);
+            serverSocket.receive(receivedPacket);
             System.out.println("Packet received: # " + packet.getSequenceNumber());
 
 //            Get the true length of data received and write the data to the file output stream after stripping away the header and EoF bits.
-            int dataLength = receivePacket.getLength();
+            int dataLength = receivedPacket.getLength();
             fileOutputStream.write(packet.getData(dataLength));
 
 //            If this is the last packet - close the file stream and the server socket

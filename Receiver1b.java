@@ -36,15 +36,17 @@ public class Receiver1b {
             serverSocket.receive(receivedPacket);
             InetAddress IPAddress = receivedPacket.getAddress();
             int clientPort = receivedPacket.getPort();
+            System.out.println("Packet received: # " + packet.getSequenceNumber());
 
-
-
+//            Get the true length of data received
+            int dataLength = receivedPacket.getLength();
             int sequenceNumber = packet.getSequenceNumber();
             AckPacket ackPacket;
+
 //              Discard duplicate packets
-            if(sequenceNumber == previousSequenceNumber + 1){
+            if(sequenceNumber == (previousSequenceNumber + 1) % 2){
 //              Write the data to the file output stream after stripping away the header and EoF bits.
-                fileOutputStream.write(packet.getData());
+                fileOutputStream.write(packet.getData(dataLength));
                 previousSequenceNumber = sequenceNumber;
                 ackPacket = new AckPacket(sequenceNumber);
             } else {
