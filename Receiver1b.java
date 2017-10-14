@@ -64,15 +64,14 @@ public class Receiver1b {
 
 //            System.out.println("Sending ACK # " + ackPacket.getSequenceNumber());
 
-//            If this is the last packet - close the file stream and the server socket and change flag
+//            If this is the last packet - close the file stream and change flag
             if(packet.isLastPacket()){
                 endOfFile = true;
                 fileOutputStream.close();
-                serverSocket.close();
             }
 
         }
-
-
+//          Close server socket
+        serverSocket.close();
     }
 }

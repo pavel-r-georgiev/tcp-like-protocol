@@ -100,6 +100,7 @@ public class Sender1b {
             position += 1024;
         }
 
+        clientSocket.close();
 
 //        Get the transfer time in nanoseconds
         long elapsedTime = (endTime  - startTime);
@@ -109,10 +110,8 @@ public class Sender1b {
 //        Get file size in KBytes
         long fileSize = file.length() / 1024;
         int throughput = (int)(fileSize / transferTimeSeconds);
+
 //        Output retransmissions and throughput
-
         System.out.println(retransmissions + " " + throughput);
-
-        clientSocket.close();
     }
 }
