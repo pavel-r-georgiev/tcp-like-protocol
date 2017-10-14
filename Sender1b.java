@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeUnit;
 
 public class Sender1b {
     public static void main(String[] args) throws IOException {
@@ -22,7 +23,7 @@ public class Sender1b {
 
         sendFile(IPAddress, port, file, timeout);
 
-        System.out.println("File " + filename + " sent successfully.");
+//        System.out.println("File " + filename + " sent successfully.");
     }
 
     private static void sendFile(InetAddress IPAddress, int port, File file, int timeout) throws IOException {
@@ -30,12 +31,17 @@ public class Sender1b {
         DatagramSocket clientSocket = new DatagramSocket();
         FileInputStream fileStream = new FileInputStream(file);
 
-//        Start timer for throughput measurement
-        long startTime = System.currentTimeMillis();
+//        Variables to keep track of start and end time of transmission
+        long startTime = 0, endTime = 0;
+//        Flag to show if packet is first to be transmitted - used to starting the timer
+        boolean firstPacket = true;
+
 
         int sequenceNumber = 0, retransmissions = 0;
-        boolean endOfFile = false;
+//        Position in bytes showing progress of transmission of file
         int position = 0;
+//        Flag to show end of transmitted file
+        boolean endOfFile = false;
 
         while(!endOfFile){
 //            Check if this is last packet of the file
@@ -44,7 +50,7 @@ public class Sender1b {
                 endOfFile = true;
             }
 
-            //            If it is last packet reduce buffer size
+//            If it is last packet reduce buffer size
             int dataSize = endOfFile ? bytesLeft : Packet.PACKET_DEFAULT_DATA_SIZE;
 
 //            Read from file and construct a packet to be sent
@@ -53,30 +59,40 @@ public class Sender1b {
             Packet packet = new Packet(data, sequenceNumber, endOfFile);
             DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
 
+//            Flags to track receipt of ACKs
             boolean correctAckReceived = false, ackReceived;
 
             while(!correctAckReceived){
 //                Send the packet
                 clientSocket.send(sendPacket);
+
+//                Start timer for throughput measurement
+                if(firstPacket){
+                    startTime = System.nanoTime();
+                    firstPacket = false;
+                }
+
                 AckPacket ack = new AckPacket();
                 try {
                     clientSocket.setSoTimeout(timeout);
                     DatagramPacket ackPacket = new DatagramPacket(ack.getBuffer(), AckPacket.ACK_BUFFER_LENGTH);
                     clientSocket.receive(ackPacket);
                     ackReceived = true;
+//                  Record the time of arrival of last ACK packet
+                    endTime =  System.nanoTime();
                 }catch (SocketTimeoutException e) {
                     ackReceived = false;
-                    System.out.println("Socket timeout, while waiting for ACK.");
+//                    System.out.println("Socket timeout, while waiting for ACK.");
                 }
 
                 int ackSequenceNumber = ack.getSequenceNumber();
 
                 if(ackSequenceNumber == sequenceNumber && ackReceived) {
                     correctAckReceived = true;
-                    System.out.println("Ack received. Ack #: " + ackSequenceNumber);
+//                    System.out.println("Ack received. Ack #: " + ackSequenceNumber);
                 } else {
                     retransmissions++;
-                    System.out.println("Retransmitting packet #" + sequenceNumber);
+//                    System.out.println("Retransmitting packet #" + sequenceNumber);
                 }
             }
 
@@ -84,14 +100,17 @@ public class Sender1b {
             position += 1024;
         }
 
-//       End timer for throughput measurement
-        long endTime =  System.currentTimeMillis();
-//        Get the transfer time in seconds
-        long transferTime = (endTime  - startTime) / 1000;
+
+//        Get the transfer time in nanoseconds
+        long elapsedTime = (endTime  - startTime);
+//        Convert nanoseconds to seconds.
+        double transferTimeSeconds = ((double) elapsedTime) / 1E9;
+
 //        Get file size in KBytes
         long fileSize = file.length() / 1024;
-        double throughput = (double) fileSize / transferTime;
+        int throughput = (int)(fileSize / transferTimeSeconds);
 //        Output retransmissions and throughput
+
         System.out.println(retransmissions + " " + throughput);
 
         clientSocket.close();

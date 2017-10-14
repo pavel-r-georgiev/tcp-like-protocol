@@ -1,27 +1,38 @@
 /* Pavel Georgiev s1525701 */
 import java.util.Arrays;
 
-/**
- * Created by Pavel on 08/10/2017.
- */
 public class Packet {
     private byte[] buffer;
-//    Records the last index of the data stored. Used for the last packet of the file.
+//    Variables for default data, buffer and header sizes. Initialized as static so they can be used across classes.
     public static final int PACKET_HEADER_SIZE = 3;
     public static final int PACKET_DEFAULT_DATA_SIZE = 1024;
     public static final int PACKET_DEFAULT_BUFFER_SIZE = PACKET_DEFAULT_DATA_SIZE + PACKET_HEADER_SIZE;
+//    Private variables to keep actual data and buffer sizes. Useful for size of last packet.
     private int PACKET_DATA_SIZE = PACKET_DEFAULT_DATA_SIZE;
     private int PACKET_BUFFER_SIZE = PACKET_DEFAULT_BUFFER_SIZE;
 
-
+    /**
+     * Constructor to initialize empty packet
+     */
     public Packet(){
         this.buffer = new byte[PACKET_DEFAULT_BUFFER_SIZE];
     }
 
+    /**
+     * Constructor for already constructed buffer
+     *
+     * @param buffer buffer of the packet to be created
+     */
     public Packet(byte[] buffer){
         this.buffer = buffer;
     }
 
+    /**
+     * Constructor for the Packet class
+     * @param data              data to store in the packet
+     * @param sequenceNumber    sequence number of the packet
+     * @param endOfFile         end of file flag of the packet
+     */
     public Packet(byte[] data, int sequenceNumber, boolean endOfFile){
          this();
 
@@ -44,24 +55,50 @@ public class Packet {
         }
     }
 
+    /**
+     * Return the buffer - header and data of the packet.
+     *
+     * @return byte array representing the buffer of the packet.
+     */
     public byte[] getBuffer() {
         return buffer;
     }
 
+    /**
+     * Returns the whole data part of the buffer
+     *
+     * @return byte array with the data part of the packet
+     */
     public byte[] getData() {
-//        Returns the whole data part of the buffer
+//
         return Arrays.copyOfRange(buffer, PACKET_HEADER_SIZE, this.getBufferSize());
     }
 
+    /**
+     *  Returns the data part of the packet.
+     *  Useful when you have the actual packet size or you want only a part of the data array.
+     *
+     * @param packetSize size of packet
+     * @return byte array representing part of specified size from the data in the packet
+     */
     public byte[] getData(int packetSize) {
-//        Returns the data part of the packet when packet is of size "packetSize"
         return Arrays.copyOfRange(buffer, PACKET_HEADER_SIZE, Math.min(PACKET_DEFAULT_BUFFER_SIZE, packetSize));
     }
 
+    /**
+     *  Returns actual size of buffer for the current packet. Might differ from default values for last packet.
+     *
+     * @return buffer size of packet
+     */
     public int getBufferSize() {
         return PACKET_HEADER_SIZE + PACKET_DATA_SIZE;
     }
 
+    /**
+     * Checks if packet is last to be transmitted
+     *
+     * @return true if packet is last in sequence or false otherwise
+     */
     public boolean isLastPacket() {
         if(buffer[2] == 1){
             return true;
@@ -69,8 +106,10 @@ public class Packet {
         return false;
     }
 
+    /**
+     * Reconstructs the sequence number from the buffer
+     */
     public int getSequenceNumber() {
-//        Reconstructs the sequence number from the buffer
         return (int) ((buffer[0] & 0xFF) << 8 | (buffer[1] & 0xFF));
     }
 }

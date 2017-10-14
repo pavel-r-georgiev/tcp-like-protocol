@@ -5,8 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.util.Arrays;
-
 
 public class Receiver1a {
 
@@ -20,7 +18,7 @@ public class Receiver1a {
 //        Store incoming packets to a file
        receiveFile(port, filename);
 
-       System.out.println("File received successfully and saved as " + filename + ".");
+//       System.out.println("File received successfully and saved as " + filename + ".");
 
     }
 
@@ -30,6 +28,7 @@ public class Receiver1a {
         File file = new File(filename);
         FileOutputStream fileOutputStream = new FileOutputStream(file);
 
+//        Flag to show end of received file
         boolean endOfFile = false;
 
         while(!endOfFile){
@@ -37,13 +36,14 @@ public class Receiver1a {
             Packet packet = new Packet();
             DatagramPacket receivedPacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_DEFAULT_BUFFER_SIZE);
             serverSocket.receive(receivedPacket);
-            System.out.println("Packet received: # " + packet.getSequenceNumber());
+
+//            System.out.println("Packet received: # " + packet.getSequenceNumber());
 
 //            Get the true length of data received and write the data to the file output stream after stripping away the header and EoF bits.
             int dataLength = receivedPacket.getLength();
             fileOutputStream.write(packet.getData(dataLength));
 
-//            If this is the last packet - close the file stream and the server socket
+//            If this is the last packet - close the file stream and the server socket and update flag
             if(packet.isLastPacket()){
                 endOfFile = true;
                 fileOutputStream.close();

@@ -3,11 +3,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.*;
-import java.util.Arrays;
 
-/**
- * Created by Pavel on 08/10/2017.
- */
 public class Sender1a {
 
     public static void main(String[] args) throws IOException {
@@ -24,7 +20,7 @@ public class Sender1a {
 
         sendFile(IPAddress, port, file);
 
-        System.out.println("File " + filename + " sent successfully.");
+//        System.out.println("File " + filename + " sent successfully.");
     }
 
     private static void sendFile(InetAddress IPAddress, int port, File file) throws IOException {
@@ -33,8 +29,10 @@ public class Sender1a {
         FileInputStream fileStream = new FileInputStream(file);
 
         int sequenceNumber = 0;
-        boolean endOfFile = false;
+//        Position in bytes showing progress of transmission of file
         int position = 0;
+//        Flag to show end of transmitted file
+        boolean endOfFile = false;
 
         while(!endOfFile){
 //            Check if this is last packet of the file
@@ -54,7 +52,7 @@ public class Sender1a {
 
 //            Send the packet and increment indices
             clientSocket.send(sendPacket);
-            sequenceNumber++;
+            sequenceNumber = (sequenceNumber + 1) % 2;
             position += 1024;
 
 //            Sleep for 10ms to avoid queue overflow

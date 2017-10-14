@@ -17,7 +17,7 @@ public class Receiver1b {
 //        Store incoming packets to a file
         receiveFile(port, filename);
 
-        System.out.println("File received successfully and saved as " + filename + ".");
+//        System.out.println("File received successfully and saved as " + filename + ".");
     }
 
     public static void receiveFile(int port, String filename) throws IOException {
@@ -26,7 +26,9 @@ public class Receiver1b {
         File file = new File(filename);
         FileOutputStream fileOutputStream = new FileOutputStream(file);
 
+//        Flag to show end of received file
         boolean endOfFile = false;
+//        Sequence number of previous successfully transferred file.
         int previousSequenceNumber = -1;
 
         while(!endOfFile){
@@ -34,11 +36,14 @@ public class Receiver1b {
             Packet packet = new Packet();
             DatagramPacket receivedPacket = new DatagramPacket(packet.getBuffer(), Packet.PACKET_DEFAULT_BUFFER_SIZE);
             serverSocket.receive(receivedPacket);
+
+//            Get IP and port of sender - used to send ACKs back
             InetAddress IPAddress = receivedPacket.getAddress();
             int clientPort = receivedPacket.getPort();
-            System.out.println("Packet received: # " + packet.getSequenceNumber());
 
-//            Get the true length of data received
+//            System.out.println("Packet received: # " + packet.getSequenceNumber());
+
+//            Get the true length of data received and sequence number of packet
             int dataLength = receivedPacket.getLength();
             int sequenceNumber = packet.getSequenceNumber();
             AckPacket ackPacket;
@@ -50,14 +55,16 @@ public class Receiver1b {
                 previousSequenceNumber = sequenceNumber;
                 ackPacket = new AckPacket(sequenceNumber);
             } else {
-                System.out.println("Discarding duplicate packet with # " + sequenceNumber);
+//                Save last sequence number in the ACK instead
                 ackPacket = new AckPacket(previousSequenceNumber);
+//                System.out.println("Discarding duplicate packet with # " + sequenceNumber);
             }
 //              Send ACK packet with corresponding sequence number back to client
-            System.out.println("Sending ACK # " + ackPacket.getSequenceNumber());
             ackPacket.sendAck(IPAddress, clientPort, serverSocket);
 
-//            If this is the last packet - close the file stream and the server socket
+//            System.out.println("Sending ACK # " + ackPacket.getSequenceNumber());
+
+//            If this is the last packet - close the file stream and the server socket and change flag
             if(packet.isLastPacket()){
                 endOfFile = true;
                 fileOutputStream.close();
