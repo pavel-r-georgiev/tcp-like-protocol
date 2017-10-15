@@ -106,11 +106,11 @@ public class Sender1b {
 //        Get the transfer time in nanoseconds
         long elapsedTime = (endTime  - startTime);
 //        Convert nanoseconds to seconds.
-        double transferTimeSeconds = ((double) elapsedTime) / 1E9;
+        float transferTimeSeconds = ((float) elapsedTime) / 1E9F;
 
 //        Get file size in KBytes
         long fileSize = file.length() / 1024;
-        double throughput = (fileSize / transferTimeSeconds);
+        float throughput = (fileSize / transferTimeSeconds);
 
 //        Output retransmissions and throughput
         System.out.println(retransmissions + " " + throughput);
