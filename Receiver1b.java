@@ -71,7 +71,7 @@ public class Receiver1b {
             }
 
         }
-//          Close server socket
+
         serverSocket.close();
     }
 }

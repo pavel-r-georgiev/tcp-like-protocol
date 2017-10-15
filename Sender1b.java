@@ -91,6 +91,7 @@ public class Sender1b {
                     correctAckReceived = true;
 //                    System.out.println("Ack received. Ack #: " + ackSequenceNumber);
                 } else {
+//                    Increment retransmissions when ack is not received or sequence numbers do not match
                     retransmissions++;
 //                    System.out.println("Retransmitting packet #" + sequenceNumber);
                 }
@@ -109,7 +110,7 @@ public class Sender1b {
 
 //        Get file size in KBytes
         long fileSize = file.length() / 1024;
-        int throughput = (int)(fileSize / transferTimeSeconds);
+        double throughput = (fileSize / transferTimeSeconds);
 
 //        Output retransmissions and throughput
         System.out.println(retransmissions + " " + throughput);
