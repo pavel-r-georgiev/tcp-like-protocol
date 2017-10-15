@@ -63,6 +63,7 @@ public class Sender1a {
             }
         }
 
+        fileStream.close();
         clientSocket.close();
 
     }

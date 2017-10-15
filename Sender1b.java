@@ -8,22 +8,29 @@ import java.net.SocketTimeoutException;
 import java.util.concurrent.TimeUnit;
 
 public class Sender1b {
+    static boolean debug = false;
     public static void main(String[] args) throws IOException {
-        if(args.length != 4){
-            System.err.println("Run with arguments <RemoteHost> <Port> <Filename> <RetryTimeout>.");
+        if(args.length != 4 && args.length != 5){
+            System.err.println("Run with arguments <RemoteHost> <Port> <Filename> <RetryTimeout> <Debug flag(optional)>.");
         }
 //        Get host, port and filename from command line arguments
         final String remoteHost = args[0];
         final int port =  Integer.parseInt(args[1]);
         final String filename = args[2];
         final int timeout = Integer.parseInt(args[3]);
+//        Set debug flag to true - used to print debugging statements
+        if(args.length == 5 && args[4].equals("debug")){
+            debug = true;
+        }
 
         InetAddress IPAddress = InetAddress.getByName(remoteHost);
         File file = new File(filename);
 
         sendFile(IPAddress, port, file, timeout);
 
-//        System.out.println("File " + filename + " sent successfully.");
+        if(debug){
+            System.out.println("File " + filename + " sent successfully.");
+        }
     }
 
     private static void sendFile(InetAddress IPAddress, int port, File file, int timeout) throws IOException {
@@ -68,7 +75,7 @@ public class Sender1b {
 
 //                Start timer for throughput measurement
                 if(firstPacket){
-                    startTime = System.nanoTime();
+                    startTime = System.currentTimeMillis();
                     firstPacket = false;
                 }
 
@@ -79,21 +86,27 @@ public class Sender1b {
                     clientSocket.receive(ackPacket);
                     ackReceived = true;
 //                  Record the time of arrival of last ACK packet
-                    endTime =  System.nanoTime();
+                    endTime =  System.currentTimeMillis();
                 }catch (SocketTimeoutException e) {
                     ackReceived = false;
-//                    System.out.println("Socket timeout, while waiting for ACK.");
+                    if(debug){
+                        System.out.println("Socket timeout, while waiting for ACK.");
+                    }
                 }
 
                 int ackSequenceNumber = ack.getSequenceNumber();
 
                 if(ackSequenceNumber == sequenceNumber && ackReceived) {
                     correctAckReceived = true;
-//                    System.out.println("Ack received. Ack #: " + ackSequenceNumber);
+                    if(debug){
+                        System.out.println("Ack received. Ack #: " + ackSequenceNumber);
+                    }
                 } else {
 //                    Increment retransmissions when ack is not received or sequence numbers do not match
                     retransmissions++;
-//                    System.out.println("Retransmitting packet #" + sequenceNumber);
+                    if(debug){
+                        System.out.println("Retransmitting packet #" + sequenceNumber);
+                    }
                 }
             }
 
@@ -101,16 +114,17 @@ public class Sender1b {
             position += 1024;
         }
 
+        fileStream.close();
         clientSocket.close();
 
-//        Get the transfer time in nanoseconds
+//        Get the transfer time in milliseconds
         long elapsedTime = (endTime  - startTime);
-//        Convert nanoseconds to seconds.
-        float transferTimeSeconds = ((float) elapsedTime) / 1E9F;
+//        Convert milliseconds to seconds.
+        double transferTimeSeconds = elapsedTime / 1000.0;
 
 //        Get file size in KBytes
-        long fileSize = file.length() / 1024;
-        float throughput = (fileSize / transferTimeSeconds);
+        double fileSize = file.length() / 1024.0;
+        double throughput = (fileSize / transferTimeSeconds);
 
 //        Output retransmissions and throughput
         System.out.println(retransmissions + " " + throughput);

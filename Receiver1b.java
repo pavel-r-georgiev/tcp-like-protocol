@@ -9,15 +9,24 @@ import java.net.InetAddress;
 
 
 public class Receiver1b {
-
+    static boolean debug = false;
     public static void main(String[] args) throws IOException {
+        if(args.length != 2 && args.length != 3){
+            System.err.println("Run with arguments <Port> <Filename> <Debug flag (optional)>.");
+        }
 //        Get port and filename from command line arguments
         final int port = Integer.parseInt(args[0]);
         final String filename = args[1];
+//        Set debug flag to true - used to print debugging statements
+        if(args.length == 3 && args[2].equals("debug")){
+            debug = true;
+        }
 //        Store incoming packets to a file
         receiveFile(port, filename);
 
-//        System.out.println("File received successfully and saved as " + filename + ".");
+        if(debug) {
+            System.out.println("File received successfully and saved as " + filename + ".");
+        }
     }
 
     public static void receiveFile(int port, String filename) throws IOException {
@@ -57,12 +66,16 @@ public class Receiver1b {
             } else {
 //                Save last sequence number in the ACK instead
                 ackPacket = new AckPacket(previousSequenceNumber);
-//                System.out.println("Discarding duplicate packet with # " + sequenceNumber);
+                if(debug){
+                  System.out.println("Discarding duplicate packet with # " + sequenceNumber);
+                }
             }
 //              Send ACK packet with corresponding sequence number back to client
             ackPacket.sendAck(IPAddress, clientPort, serverSocket);
 
-//            System.out.println("Sending ACK # " + ackPacket.getSequenceNumber());
+            if(debug){
+                System.out.println("Sending ACK # " + ackPacket.getSequenceNumber());
+            }
 
 //            If this is the last packet - close the file stream and change flag
             if(packet.isLastPacket()){
