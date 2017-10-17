@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Sender1b {
     static boolean debug = false;
+    public static final int MAXIMUM_CONSECUTIVE_RETRANSMISSIONS = 10;
     public static void main(String[] args) throws IOException {
         if(args.length != 4 && args.length != 5){
             System.err.println("Run with arguments <RemoteHost> <Port> <Filename> <RetryTimeout> <Debug flag(optional)>.");
@@ -31,8 +32,6 @@ public class Sender1b {
         if(debug){
             System.out.println("File " + filename + " sent successfully.");
         }
-
-        System.exit(0);
     }
 
     private static void sendFile(InetAddress IPAddress, int port, File file, int timeout) throws IOException {
@@ -71,6 +70,9 @@ public class Sender1b {
 //            Flags to track receipt of ACKs
             boolean correctAckReceived = false, ackReceived;
 
+//            Counter to track consecutive retransmissions
+            int consecutiveRetransmissions = 0;
+
             while(!correctAckReceived){
 //                Send the packet
                 clientSocket.send(sendPacket);
@@ -98,6 +100,11 @@ public class Sender1b {
 
                 int ackSequenceNumber = ack.getSequenceNumber();
 
+//                Reset consecutive retransmissions if any ACK is received
+                if(ackReceived){
+                    consecutiveRetransmissions = 0;
+                }
+
                 if(ackSequenceNumber == sequenceNumber && ackReceived) {
                     correctAckReceived = true;
                     if(debug){
@@ -106,6 +113,17 @@ public class Sender1b {
                 } else {
 //                    Increment retransmissions when ack is not received or sequence numbers do not match
                     retransmissions++;
+
+//                    Increment consecutive retransmissions in the case of not received ACK
+                    if(!ackReceived) {
+                        consecutiveRetransmissions++;
+                    }
+//                    In case of no ACKs received in the last fixed amount of retransmissions stop trying to resend
+                    if(consecutiveRetransmissions > MAXIMUM_CONSECUTIVE_RETRANSMISSIONS){
+                        retransmissions -= MAXIMUM_CONSECUTIVE_RETRANSMISSIONS;
+                        break;
+                    }
+
                     if(debug){
                         System.out.println("Retransmitting packet #" + sequenceNumber);
                     }

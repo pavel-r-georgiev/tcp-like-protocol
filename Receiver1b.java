@@ -27,8 +27,6 @@ public class Receiver1b {
         if(debug) {
             System.out.println("File received successfully and saved as " + filename + ".");
         }
-
-        System.exit(0);
     }
 
     public static void receiveFile(int port, String filename) throws IOException {

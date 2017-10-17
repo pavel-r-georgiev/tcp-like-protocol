@@ -20,7 +20,6 @@ public class Sender1a {
 
         sendFile(IPAddress, port, file);
 
-//        System.out.println("File " + filename + " sent successfully.");
     }
 
     private static void sendFile(InetAddress IPAddress, int port, File file) throws IOException {
@@ -28,7 +27,6 @@ public class Sender1a {
         DatagramSocket clientSocket = new DatagramSocket();
         FileInputStream fileStream = new FileInputStream(file);
 
-        int sequenceNumber = 0;
 //        Position in bytes showing progress of transmission of file
         int position = 0;
 //        Flag to show end of transmitted file
@@ -47,12 +45,13 @@ public class Sender1a {
 //            Read from file and construct a packet to be sent
             byte[] data = new byte[dataSize];
             fileStream.read(data);
-            Packet packet = new Packet(data, sequenceNumber, endOfFile);
+
+//            Construct packet with sequence number always being 0 as we assume no packet loss
+            Packet packet = new Packet(data, 0, endOfFile);
             DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
 
 //            Send the packet and increment indices
             clientSocket.send(sendPacket);
-            sequenceNumber = (sequenceNumber + 1) % 2;
             position += 1024;
 
 //            Sleep for 10ms to avoid queue overflow
