@@ -27,6 +27,8 @@ public class Receiver1b {
         if(debug) {
             System.out.println("File received successfully and saved as " + filename + ".");
         }
+
+        System.exit(0);
     }
 
     public static void receiveFile(int port, String filename) throws IOException {
@@ -50,7 +52,9 @@ public class Receiver1b {
             InetAddress IPAddress = receivedPacket.getAddress();
             int clientPort = receivedPacket.getPort();
 
-//            System.out.println("Packet received: # " + packet.getSequenceNumber());
+            if(debug){
+                System.out.println("Packet received: # " + packet.getSequenceNumber());
+            }
 
 //            Get the true length of data received and sequence number of packet
             int dataLength = receivedPacket.getLength();

@@ -31,6 +31,8 @@ public class Sender1b {
         if(debug){
             System.out.println("File " + filename + " sent successfully.");
         }
+
+        System.exit(0);
     }
 
     private static void sendFile(InetAddress IPAddress, int port, File file, int timeout) throws IOException {
@@ -127,6 +129,6 @@ public class Sender1b {
         double throughput = (fileSize / transferTimeSeconds);
 
 //        Output retransmissions and throughput
-        System.out.println(retransmissions + " " + throughput);
+        System.out.printf("%d %f%n", retransmissions, throughput);
     }
 }
