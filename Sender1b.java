@@ -114,8 +114,8 @@ public class Sender1b {
 //                    Increment retransmissions when ack is not received or sequence numbers do not match
                     retransmissions++;
 
-//                    Increment consecutive retransmissions in the case of not received ACK
-                    if(!ackReceived) {
+//                    Increment consecutive retransmissions in the case of ACK for last packet not received
+                    if(!ackReceived && endOfFile) {
                         consecutiveRetransmissions++;
                     }
 //                    In case of no ACKs received in the last fixed amount of retransmissions stop trying to resend
