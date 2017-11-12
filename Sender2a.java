@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.*;
+import java.util.concurrent.*;
 
 public class Sender2a {
     static boolean debug = false;
@@ -23,6 +24,10 @@ public class Sender2a {
     public static HashMap<Integer,Packet> packets = new HashMap<>();
 //   List of uncacked packets
     public static ArrayList<Packet> unackedPackets = new ArrayList<>();
+//   Future for callable
+    private static Thread timer;
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor();
+
 
     public static void main(String[] args) throws IOException {
         if(args.length != 5 && args.length != 6){
@@ -42,11 +47,12 @@ public class Sender2a {
         IPAddress = InetAddress.getByName(remoteHost);
         File file = new File(filename);
 
-        base = 0;
-        nextSequenceNumber = 0;
+        base = 1;
+        nextSequenceNumber = 1;
 
         Thread ackThread = new Thread(new AckThread(port + 1));
         ackThread.start();
+        sendFile(file);
 
         if(debug){
             System.out.println("File " + filename + " sent successfully.");
@@ -69,46 +75,49 @@ public class Sender2a {
 //        Position in bytes showing progress of transmission of file
         int position = 0;
 
-
-        while (nextSequenceNumber < base + windowSize && !endOfFile) {
+        while (!endOfFile) {
+            while (nextSequenceNumber < base + windowSize && !endOfFile) {
 //            Check if this is last packet of the file
-            int bytesLeft = (int) (file.length() - position);
-            if (bytesLeft <= 1024) {
-                endOfFile = true;
-            }
+                int bytesLeft = (int) (file.length() - position);
+                if (bytesLeft <= 1024) {
+                    endOfFile = true;
+                }
 
 
 //            If it is last packet reduce buffer size
-            int dataSize = endOfFile ? bytesLeft : Packet.PACKET_DEFAULT_DATA_SIZE;
+                int dataSize = endOfFile ? bytesLeft : Packet.PACKET_DEFAULT_DATA_SIZE;
 
 //            Read from file and construct a packet to be sent
-            byte[] data = new byte[dataSize];
-            fileStream.read(data);
-            Packet packet = new Packet(data, sequenceNumber, endOfFile);
-            packets.put(packet.getSequenceNumber(), packet);
+                byte[] data = new byte[dataSize];
+                fileStream.read(data);
+                Packet packet = new Packet(data, sequenceNumber, endOfFile);
+                packets.put(packet.getSequenceNumber(), packet);
 
-            DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
+                DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
 
-            //                Send the packet
-            clientSocket.send(sendPacket);
+                //                Send the packet
+                clientSocket.send(sendPacket);
 
-            //                Start timer for throughput measurement
-            if(firstPacket){
-                startTime = System.currentTimeMillis();
-                firstPacket = false;
+                //                Start timer for throughput measurement
+                if (firstPacket) {
+                    startTime = System.currentTimeMillis();
+                    firstPacket = false;
+                }
+
+                if (base == nextSequenceNumber) {
+                    startTimer();
+                }
+
+                if(!endOfFile){
+                    nextSequenceNumber++;
+                }
+
+                sequenceNumber++;
+                position += 1024;
             }
-
-            if(base == nextSequenceNumber){
-               startTimer();
-            }
-            nextSequenceNumber++;
-
-            sequenceNumber = (sequenceNumber + 1);
-            position += 1024;
         }
-
-        fileStream.close();
-        clientSocket.close();
+            fileStream.close();
+            clientSocket.close();
 
 ////        Get the transfer time in milliseconds
 //        long elapsedTime = (endTime  - startTime);
@@ -123,12 +132,17 @@ public class Sender2a {
 //        System.out.printf("%d %f%n", retransmissions, throughput);
     }
 
-    public static synchronized void resendPackets() throws IOException {
-        startTimer();
+
+    public static synchronized void resendPackets() {
+//        startTimer();
         for(int i = base; i < nextSequenceNumber; i++){
             Packet packet = packets.get(i);
             DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
-            clientSocket.send(sendPacket);
+            try {
+                clientSocket.send(sendPacket);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -145,8 +159,8 @@ public class Sender2a {
         }
     }
 
-    public static synchronized void setBase(int lastAckNumber) {
-        base = lastAckNumber + 1;
+    public static synchronized void setBase(int newBase) {
+        base = newBase;
     }
 
     public static synchronized boolean isEndOfFile(){
@@ -158,9 +172,12 @@ public class Sender2a {
     }
 
     public static synchronized void stopTimer() {
-
+        System.out.println("Timer stopped and base is " + base);
+        System.out.println("Timer stopped and nextSeq is " + nextSequenceNumber);
+        timer.interrupt();
     }
 
     public static synchronized void startTimer() {
+       timer = new Thread(new Timer(base));
     }
 }

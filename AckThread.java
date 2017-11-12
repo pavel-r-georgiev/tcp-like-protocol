@@ -3,13 +3,13 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
+import java.util.HashSet;
 
 public class AckThread implements Runnable {
     private DatagramSocket serverSocket;
     private int lastSequenceNumber;
     private boolean running = true;
-    public static ArrayList<Integer> receivedAcks = new ArrayList<>();
+    public static HashSet<Integer> receivedAcks = new HashSet<>();
 
     public AckThread(int ackPort) {
         try {
@@ -37,6 +37,9 @@ public class AckThread implements Runnable {
                 }
 
                 int base = Sender2a.getBase();
+                int nextSequenceNumber = Sender2a.getNextSequence();
+                boolean endOfFile = Sender2a.isEndOfFile();
+
                 int ackSequenceNumber = ack.getSequenceNumber();
 
                 if(base <= ackSequenceNumber && ackSequenceNumber <= (base + Sender2a.windowSize - 1)) {
@@ -44,16 +47,17 @@ public class AckThread implements Runnable {
                     receivedAcks.add(ackSequenceNumber);
                     // Remove ACK from unreceived ACKS on Sender thread
                     Sender2a.setAckReceived(ackSequenceNumber);
-                    // Change base
-                    Sender2a.setBase(ackSequenceNumber);
 
-                    if(base == Sender2a.getNextSequence()){
-                        Sender2a.stopTimer();
-                    } else {
+                    base = ackSequenceNumber + 1;
+                    // Change base
+                    Sender2a.setBase(base);
+
+                    Sender2a.stopTimer();
+                    if(base != nextSequenceNumber) {
                         Sender2a.startTimer();
                     }
 
-                    if(Sender2a.isEndOfFile()){
+                    if(base == nextSequenceNumber && endOfFile){
                         running = false;
                     }
                 }
