@@ -5,14 +5,14 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.HashSet;
 
-public class AckThread implements Runnable {
+public class AckThreadGBN implements Runnable {
     private DatagramSocket serverSocket;
     private int lastSequenceNumber;
     private boolean running = true;
     public static HashSet<Integer> receivedAcks = new HashSet<Integer>();
     private boolean debug;
 
-    public AckThread(int ackPort) {
+    public AckThreadGBN(int ackPort) {
         try {
             serverSocket = new DatagramSocket(ackPort);
             serverSocket.setSoTimeout(0);
@@ -51,8 +51,8 @@ public class AckThread implements Runnable {
                 if(base <= ackSequenceNumber && ackSequenceNumber <= (base + Sender2a.windowSize - 1)) {
                     // Mark ACK as received
                     receivedAcks.add(ackSequenceNumber);
-                    // Remove ACK from unreceived ACKS on Sender thread
-                    Sender2a.setAckReceived(ackSequenceNumber);
+                    // Inform Sender thread that ack is received
+                    Sender2a.ackReceived();
 
                     if(endOfFile && base == nextSequenceNumber - 1){
                         Sender2a.stopTimer();
