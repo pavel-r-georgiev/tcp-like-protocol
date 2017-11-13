@@ -9,12 +9,14 @@ public class AckThread implements Runnable {
     private DatagramSocket serverSocket;
     private int lastSequenceNumber;
     private boolean running = true;
-    public static HashSet<Integer> receivedAcks = new HashSet<>();
+    public static HashSet<Integer> receivedAcks = new HashSet<Integer>();
+    private boolean debug;
 
     public AckThread(int ackPort) {
         try {
             serverSocket = new DatagramSocket(ackPort);
             serverSocket.setSoTimeout(0);
+            debug = Sender2a.debug;
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -42,25 +44,34 @@ public class AckThread implements Runnable {
 
                 int ackSequenceNumber = ack.getSequenceNumber();
 
+                if(debug){
+                    System.out.println("Received ACK # " + ackSequenceNumber);
+                }
+
                 if(base <= ackSequenceNumber && ackSequenceNumber <= (base + Sender2a.windowSize - 1)) {
                     // Mark ACK as received
                     receivedAcks.add(ackSequenceNumber);
                     // Remove ACK from unreceived ACKS on Sender thread
                     Sender2a.setAckReceived(ackSequenceNumber);
 
+                    if(base == nextSequenceNumber && endOfFile){
+                        Sender2a.stopTimer();
+                        running = false;
+                        break;
+                    }
+
                     base = ackSequenceNumber + 1;
                     // Change base
                     Sender2a.setBase(base);
 
-                    Sender2a.stopTimer();
-                    if(base != nextSequenceNumber) {
-                        Sender2a.startTimer();
-                    }
-
-                    if(base == nextSequenceNumber && endOfFile){
-                        running = false;
+                    if(base == nextSequenceNumber) {
+                        Sender2a.stopTimer();
+                    } else {
+                        Sender2a.restartTimer();
                     }
                 }
         }
+
+        serverSocket.close();
     }
 }

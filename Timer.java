@@ -1,20 +1,21 @@
 public class Timer implements Runnable {
-    private int sequenceNumber;
+    public static int sequenceNumber;
     private boolean running = true;
     private long timePast;
     private int timeout;
     private long timeCreated;
+    private boolean debug;
 
     public Timer(int sequenceNumber){
         this.sequenceNumber = sequenceNumber;
         this.timeout = Sender2a.timeout;
+        this.debug = Sender2a.debug;
         this.timeCreated = System.currentTimeMillis();
     }
 
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted() && running) {
-            System.out.println("Timer running - >" + sequenceNumber);
             if (AckThread.receivedAcks.contains(sequenceNumber)) {
                 running = false;
                 break;
@@ -28,7 +29,9 @@ public class Timer implements Runnable {
     }
 
     private synchronized  void timeout() {
-        System.out.println("Timeout. Resending packets");
+        if(debug){
+            System.out.println("Timer timeout for packet # " + sequenceNumber);
+        }
         Sender2a.resendPackets();
     }
 }

@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class Sender2a {
-    static boolean debug = false;
+    public static boolean debug = false;
     public static final int MAXIMUM_CONSECUTIVE_RETRANSMISSIONS = 10;
     public static int windowSize;
     private static int base;
@@ -21,12 +21,13 @@ public class Sender2a {
 //        Flag to show end of transmitted file
     private static boolean endOfFile = false;
 //   Memory reference to the packets. Used for retransmission of packets.
-    public static HashMap<Integer,Packet> packets = new HashMap<>();
+    public static HashMap<Integer,Packet> packets = new HashMap<Integer,Packet>();
 //   List of uncacked packets
-    public static ArrayList<Packet> unackedPackets = new ArrayList<>();
+    public static ArrayList<Packet> unackedPackets = new ArrayList<Packet>();
 //   Future for callable
     private static Thread timer;
-    private static ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static int timerSequenceNumber = 0;
+
 
 
     public static void main(String[] args) throws IOException {
@@ -40,7 +41,7 @@ public class Sender2a {
         timeout = Integer.parseInt(args[3]);
         windowSize = Integer.parseInt(args[4]);
 //        Set debug flag to true - used to print debugging statements
-        if(args.length == 5 && args[4].equals("debug")){
+        if(args.length == 6 && args[5].equals("debug")){
             debug = true;
         }
 
@@ -70,12 +71,12 @@ public class Sender2a {
         boolean firstPacket = true;
 
 
-        int sequenceNumber = 0;
+        int sequenceNumber = 1;
 
 //        Position in bytes showing progress of transmission of file
         int position = 0;
 
-        while (!endOfFile) {
+        while (!endOfFile || base != nextSequenceNumber) {
             while (nextSequenceNumber < base + windowSize && !endOfFile) {
 //            Check if this is last packet of the file
                 int bytesLeft = (int) (file.length() - position);
@@ -97,6 +98,10 @@ public class Sender2a {
 
                 //                Send the packet
                 clientSocket.send(sendPacket);
+
+                if(debug){
+                    System.out.println("Sending packet #" + sequenceNumber);
+                }
 
                 //                Start timer for throughput measurement
                 if (firstPacket) {
@@ -134,11 +139,18 @@ public class Sender2a {
 
 
     public static synchronized void resendPackets() {
-//        startTimer();
-        for(int i = base; i < nextSequenceNumber; i++){
+        if(debug){
+            System.out.println("Resending packets from # " + base);
+        }
+
+        restartTimer();
+        for(int i = base; i <= nextSequenceNumber; i++){
             Packet packet = packets.get(i);
             DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
             try {
+                if(debug){
+                    System.out.println("Sending packet #" + packet.getSequenceNumber());
+                }
                 clientSocket.send(sendPacket);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -172,12 +184,25 @@ public class Sender2a {
     }
 
     public static synchronized void stopTimer() {
-        System.out.println("Timer stopped and base is " + base);
-        System.out.println("Timer stopped and nextSeq is " + nextSequenceNumber);
-        timer.interrupt();
+        if(debug) {
+            System.out.println("Timer stopped and base is " + base);
+            System.out.println("Timer stopped and nextSeq is " + nextSequenceNumber);
+        }
+        if(timer != null) {
+            timer.interrupt();
+        }
     }
 
     public static synchronized void startTimer() {
-       timer = new Thread(new Timer(base));
+        if(debug){
+            System.out.println("Timer started for #" + base);
+        }
+        timer = new Thread(new Timer(base));
+        timer.start();
+    }
+
+    public static synchronized void restartTimer() {
+        stopTimer();
+        startTimer();
     }
 }

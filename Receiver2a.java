@@ -48,8 +48,8 @@ public class Receiver2a {
 
 //            Get IP and port of sender - used to send ACKs back
             InetAddress IPAddress = receivedPacket.getAddress();
-//            int clientPort = port + 1;
-              int clientPort = receivedPacket.getPort();
+            int clientPort = port + 1;
+//              int clientPort = receivedPacket.getPort();
 //            Get the true length of data received and sequence number of packet
             int dataLength = receivedPacket.getLength();
             int sequenceNumber = packet.getSequenceNumber();
