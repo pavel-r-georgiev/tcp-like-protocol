@@ -25,7 +25,7 @@ public class Sender2a {
 //   List of uncacked packets
     public static ArrayList<Packet> unackedPackets = new ArrayList<Packet>();
 //   Future for callable
-    private static Thread timer;
+    private static Thread timer = null;
     private static int timerSequenceNumber = 0;
 
 
@@ -76,7 +76,7 @@ public class Sender2a {
 //        Position in bytes showing progress of transmission of file
         int position = 0;
 
-        while (!endOfFile || base != nextSequenceNumber) {
+        while (!endOfFile || running) {
             while (nextSequenceNumber < base + windowSize && !endOfFile) {
 //            Check if this is last packet of the file
                 int bytesLeft = (int) (file.length() - position);
@@ -113,9 +113,8 @@ public class Sender2a {
                     startTimer();
                 }
 
-                if(!endOfFile){
-                    nextSequenceNumber++;
-                }
+
+                nextSequenceNumber++;
 
                 sequenceNumber++;
                 position += 1024;
@@ -144,8 +143,9 @@ public class Sender2a {
         }
 
         restartTimer();
-        for(int i = base; i <= nextSequenceNumber; i++){
+        for(int i = base; i < nextSequenceNumber; i++){
             Packet packet = packets.get(i);
+
             DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
             try {
                 if(debug){
@@ -204,5 +204,9 @@ public class Sender2a {
     public static synchronized void restartTimer() {
         stopTimer();
         startTimer();
+    }
+
+    public static synchronized void lastAckReceived() {
+        running = false;
     }
 }

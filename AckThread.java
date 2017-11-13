@@ -54,8 +54,9 @@ public class AckThread implements Runnable {
                     // Remove ACK from unreceived ACKS on Sender thread
                     Sender2a.setAckReceived(ackSequenceNumber);
 
-                    if(base == nextSequenceNumber && endOfFile){
+                    if(endOfFile && base == nextSequenceNumber - 1){
                         Sender2a.stopTimer();
+                        Sender2a.lastAckReceived();
                         running = false;
                         break;
                     }
