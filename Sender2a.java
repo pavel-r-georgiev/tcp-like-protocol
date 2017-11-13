@@ -26,7 +26,8 @@ public class Sender2a {
     public static ArrayList<Packet> unackedPackets = new ArrayList<Packet>();
 //   Future for callable
     private static Thread timer = null;
-    private static int timerSequenceNumber = 0;
+    //        Variables to keep track of start and end time of transmission
+    private static long startTime = 0, endTime = 0;
 
 
 
@@ -65,8 +66,6 @@ public class Sender2a {
         clientSocket = new DatagramSocket();
         FileInputStream fileStream = new FileInputStream(file);
 
-//        Variables to keep track of start and end time of transmission
-        long startTime = 0, endTime = 0;
 //        Flag to show if packet is first to be transmitted - used to starting the timer
         boolean firstPacket = true;
 
@@ -123,17 +122,17 @@ public class Sender2a {
             fileStream.close();
             clientSocket.close();
 
-////        Get the transfer time in milliseconds
-//        long elapsedTime = (endTime  - startTime);
-////        Convert milliseconds to seconds.
-//        double transferTimeSeconds = elapsedTime / 1000.0;
-//
-////        Get file size in KBytes
-//        double fileSize = file.length() / 1024.0;
-//        double throughput = (fileSize / transferTimeSeconds);
-//
-////        Output retransmissions and throughput
-//        System.out.printf("%d %f%n", retransmissions, throughput);
+//        Get the transfer time in milliseconds
+        long elapsedTime = (endTime  - startTime);
+//        Convert milliseconds to seconds.
+        double transferTimeSeconds = elapsedTime / 1000.0;
+
+//        Get file size in KBytes
+        double fileSize = file.length() / 1024.0;
+        double throughput = (fileSize / transferTimeSeconds);
+
+//        Output retransmissions and throughput
+        System.out.printf("%f %n", throughput);
     }
 
 
@@ -207,6 +206,7 @@ public class Sender2a {
     }
 
     public static synchronized void lastAckReceived() {
+        endTime = System.currentTimeMillis();
         running = false;
     }
 }
