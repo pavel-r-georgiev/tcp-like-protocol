@@ -58,6 +58,8 @@ public class Sender2a {
         if(debug){
             System.out.println("File " + filename + " sent successfully.");
         }
+
+        System.exit(0);
     }
 
     private static void sendFile(File file) throws IOException {
