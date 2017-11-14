@@ -1,10 +1,9 @@
 public class TimerGBN implements Runnable {
-    public static int sequenceNumber;
+    final private int sequenceNumber;
     private boolean running = true;
-    private long timePast;
-    private int timeout;
-    private long timeCreated;
-    private boolean debug;
+    final private int timeout;
+    final private long timeCreated;
+    final private boolean debug;
 
     public TimerGBN(int sequenceNumber){
         this.sequenceNumber = sequenceNumber;
@@ -30,7 +29,7 @@ public class TimerGBN implements Runnable {
 
     private synchronized  void timeout() {
         if(debug){
-            System.out.println("TimerGBN timeout for packet # " + sequenceNumber);
+            System.out.println("Timer timeout for packet # " + sequenceNumber);
         }
         Sender2a.resendPackets();
     }

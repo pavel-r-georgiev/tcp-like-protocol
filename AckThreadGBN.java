@@ -7,7 +7,7 @@ import java.util.HashSet;
 
 public class AckThreadGBN implements Runnable {
     private DatagramSocket serverSocket;
-    private int lastSequenceNumber;
+    private boolean endOfFile = false;
     private boolean running = true;
     public static HashSet<Integer> receivedAcks = new HashSet<Integer>();
     private boolean debug;
@@ -40,7 +40,10 @@ public class AckThreadGBN implements Runnable {
 
                 int base = Sender2a.getBase();
                 int nextSequenceNumber = Sender2a.getNextSequence();
-                boolean endOfFile = Sender2a.isEndOfFile();
+
+                if(Sender2a.isEndOfFile()){
+                    endOfFile = true;
+                }
 
                 int ackSequenceNumber = ack.getSequenceNumber();
 
@@ -54,14 +57,16 @@ public class AckThreadGBN implements Runnable {
                     // Inform Sender thread that ack is received
                     Sender2a.ackReceived();
 
-                    if(endOfFile && base == nextSequenceNumber - 1){
+                    base = ackSequenceNumber + 1;
+
+                    if(endOfFile && base == nextSequenceNumber){
                         Sender2a.stopTimer();
                         Sender2a.lastAckReceived();
                         running = false;
                         break;
                     }
 
-                    base = ackSequenceNumber + 1;
+
                     // Change base
                     Sender2a.setBase(base);
 
@@ -71,6 +76,7 @@ public class AckThreadGBN implements Runnable {
                         Sender2a.restartTimer();
                     }
                 }
+            Thread.yield();
         }
 
         serverSocket.close();

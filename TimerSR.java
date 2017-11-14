@@ -47,7 +47,7 @@ public class TimerSR implements Runnable {
             }
             Sender2b.clientSocket.send(sendPacket);
             Sender2b.startTimer(sequenceNumber);
-            Sender2b.checkRetransmissionLimit();
+            Sender2b.checkRetransmissionLimit(sequenceNumber);
         } catch (IOException e) {
             e.printStackTrace();
         }

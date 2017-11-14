@@ -11,6 +11,7 @@ public class AckThreadSR implements Runnable {
     private boolean running = true;
     public static HashSet<Integer> receivedAcks = new HashSet<Integer>();
     private boolean debug;
+    private boolean fileEnded;
 
     public AckThreadSR(int ackPort) {
         try {
@@ -41,7 +42,10 @@ public class AckThreadSR implements Runnable {
 
             int base = Sender2b.getBase();
             int nextSequenceNumber = Sender2b.getNextSequence();
-            boolean endOfFile = Sender2b.isEndOfFile();
+
+            if(Sender2b.isEndOfFile()){
+                fileEnded = true ;
+            }
 
             int ackSequenceNumber = ack.getSequenceNumber();
 
@@ -61,7 +65,7 @@ public class AckThreadSR implements Runnable {
                     Sender2b.setBase();
                 }
 
-                if(endOfFile && base == nextSequenceNumber - 1){
+                if(fileEnded && base == nextSequenceNumber - 1){
                     Sender2b.lastAckReceived();
                     running = false;
                     break;

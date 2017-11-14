@@ -48,8 +48,6 @@ public class Receiver2b {
 
             int base = 1;
 
-//        Flag to show end of received file
-            boolean endOfFile = false;
 //        Sequence number of previous successfully transferred file.
             int expectedSequenceNumber = 1;
 
@@ -69,7 +67,9 @@ public class Receiver2b {
                 int sequenceNumber = packet.getSequenceNumber();
 
                 if(debug){
-                    System.out.println("Packet received: # " + sequenceNumber);
+                    System.out.printf("Window [%d %d]%n", base, base + windowSize - 1);
+                    System.out.println("Expected sequence number: #" + expectedSequenceNumber);
+                    System.out.println("Packet received: #" + sequenceNumber);
                 }
 
                 AckPacket ackPacket;
@@ -100,7 +100,7 @@ public class Receiver2b {
                     System.out.println("Sending ACK # " + ackPacket.getSequenceNumber());
                 }
 
-//                Check for buffered packets that can written to file after file transmission
+//                Check for buffered packets that can written to file after received packet
                 while (bufferedPackets.size() > 0 && bufferedPackets.first().getSequenceNumber() == expectedSequenceNumber) {
                     packet = bufferedPackets.pollFirst();
                     base = packet.getSequenceNumber() + 1;
@@ -113,7 +113,7 @@ public class Receiver2b {
                 }
 
 //            If this is the last packet - close the file stream and change flag
-                if(endOfFile && bufferedPackets.size() == 0){
+                if(endOfFile && bufferedPackets.size() == 0 && base == expectedSequenceNumber - 1){
                     endOfFile = true;
                     fileOutputStream.close();
                 }

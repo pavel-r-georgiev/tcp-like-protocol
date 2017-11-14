@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public class Sender2b {
     public static boolean debug = false;
     public static final int MAXIMUM_CONSECUTIVE_RETRANSMISSIONS = 20;
-    private static int consecutiveRetransmissions = 0;
+    private static final HashMap<Integer, Integer> retransmissions = new HashMap<Integer, Integer>();
     public static int windowSize;
     private static int base;
     private static int nextSequenceNumber;
@@ -27,7 +27,7 @@ public class Sender2b {
     //   List of unacked packets
     public static volatile ConcurrentSkipListSet<Integer> unackedPackets = new ConcurrentSkipListSet<Integer>();
 
-    
+
     //        Variables to keep track of start and end time of transmission
     private static long startTime = 0, endTime = 0;
 
@@ -60,6 +60,8 @@ public class Sender2b {
         if(debug){
             System.out.println("File " + filename + " sent successfully.");
         }
+
+        System.exit(0);
     }
 
     private static void sendFile(File file) throws IOException {
@@ -136,8 +138,15 @@ public class Sender2b {
         System.out.printf("%f %n", throughput);
     }
 
-    public static synchronized void checkRetransmissionLimit(){
-        consecutiveRetransmissions++;
+    public static synchronized void checkRetransmissionLimit(int sequenceNumber){
+        if(retransmissions.containsKey(sequenceNumber)){
+            retransmissions.put(sequenceNumber, retransmissions.get(sequenceNumber) + 1);
+        } else {
+            retransmissions.put(sequenceNumber, 1);
+        }
+
+        int consecutiveRetransmissions = retransmissions.get(sequenceNumber);
+
         if(consecutiveRetransmissions >= MAXIMUM_CONSECUTIVE_RETRANSMISSIONS && endOfFile){
             running = false;
         }
@@ -150,8 +159,8 @@ public class Sender2b {
 
 
     public static synchronized void setAckReceived(int ackSequenceNumber) {
+        endTime = System.currentTimeMillis();
         synchronized (unackedPackets) {
-            consecutiveRetransmissions = 0;
 //        Mark as ACKed as received
             unackedPackets.remove(ackSequenceNumber);
         }
@@ -184,7 +193,6 @@ public class Sender2b {
 
 
     public static synchronized void lastAckReceived() {
-        endTime = System.currentTimeMillis();
         running = false;
     }
 }

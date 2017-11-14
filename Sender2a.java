@@ -9,18 +9,18 @@ import java.util.*;
 
 public class Sender2a {
     public static boolean debug = false;
-    public static final int MAXIMUM_CONSECUTIVE_RETRANSMISSIONS = 10;
+    public static final int MAXIMUM_CONSECUTIVE_RETRANSMISSIONS = 20;
     public volatile static int consecutiveRetransmissions = 0;
     public static int windowSize;
-    private static int base;
-    private static int nextSequenceNumber;
+    private volatile static int base;
+    private volatile static int nextSequenceNumber;
     public static int timeout;
     public static boolean running = true;
     private static DatagramSocket clientSocket;
     private static InetAddress IPAddress;
     private static int port;
 //        Flag to show end of transmitted file
-    private static boolean endOfFile = false;
+    private static volatile boolean endOfFile = false;
 //   Memory reference to the packets. Used for retransmission of packets.
     public static HashMap<Integer,Packet> packets = new HashMap<Integer,Packet>();
 //   Future for callable
@@ -82,6 +82,9 @@ public class Sender2a {
                     endOfFile = true;
                 }
 
+                if(debug){
+                    System.out.printf("Windows [%d %d]%n", base, nextSequenceNumber);
+                }
 
 //            If it is last packet reduce buffer size
                 int dataSize = endOfFile ? bytesLeft : Packet.PACKET_DEFAULT_DATA_SIZE;
@@ -145,6 +148,10 @@ public class Sender2a {
 //        If threshold consecutive transmissions reached at end of file end the sender. Last ACK most likely got lost.
         if(consecutiveRetransmissions >= MAXIMUM_CONSECUTIVE_RETRANSMISSIONS && endOfFile){
             running = false;
+            if(debug){
+                System.out.println("Maximum retransmissions reached.");
+            }
+            return;
         }
 
         restartTimer();
@@ -169,6 +176,7 @@ public class Sender2a {
 
 
     public static synchronized void ackReceived() {
+        endTime = System.currentTimeMillis();
         consecutiveRetransmissions = 0;
     }
 
@@ -186,8 +194,7 @@ public class Sender2a {
 
     public static synchronized void stopTimer() {
         if(debug) {
-            System.out.println("Timer stopped and base is " + base);
-            System.out.println("Timer stopped and nextSeq is " + nextSequenceNumber);
+            System.out.println("Timer stopped for " + base);
         }
         if(timer != null) {
             timer.interrupt();
@@ -208,7 +215,6 @@ public class Sender2a {
     }
 
     public static synchronized void lastAckReceived() {
-        endTime = System.currentTimeMillis();
         running = false;
     }
 }
