@@ -61,9 +61,9 @@ public class Receiver2b {
 
 //            Get IP and port of sender - used to send ACKs back
                 InetAddress IPAddress = receivedPacket.getAddress();
-                int clientPort = port + 1;
+//                int clientPort = port + 1;
 
-//              int clientPort = receivedPacket.getPort();
+              int clientPort = receivedPacket.getPort();
 //            Get the true length of data received and sequence number of packet
                 int dataLength = receivedPacket.getLength();
                 int sequenceNumber = packet.getSequenceNumber();
@@ -75,13 +75,12 @@ public class Receiver2b {
                 AckPacket ackPacket;
                 ackPacket = new AckPacket(sequenceNumber);
 
-
                 if(sequenceNumber >= base && sequenceNumber <= base + windowSize - 1) {
                     if(sequenceNumber == expectedSequenceNumber){
 //              Write the data to the file output stream after stripping away the header and EoF bits.
                         fileOutputStream.write(packet.getData(dataLength));
                         expectedSequenceNumber++;
-                        base = sequenceNumber;
+                        base = sequenceNumber + 1;
                     } else {
 //                        Buffer the packet if it is out of order.
                         bufferedPackets.add(packet);
@@ -89,7 +88,7 @@ public class Receiver2b {
                             System.out.println("Buffering packet with # " + sequenceNumber);
                         }
                     }
-                } else if(sequenceNumber <= base - windowSize || sequenceNumber >= base - 1) {
+                } else if(sequenceNumber < base - windowSize || sequenceNumber > base - 1) {
 //                    Packet is out of bounds where it should be ACKed it, so just continue
                     continue;
                 }
@@ -104,7 +103,7 @@ public class Receiver2b {
 //                Check for buffered packets that can written to file after file transmission
                 while (bufferedPackets.size() > 0 && bufferedPackets.first().getSequenceNumber() == expectedSequenceNumber) {
                     packet = bufferedPackets.pollFirst();
-                    base = packet.getSequenceNumber();
+                    base = packet.getSequenceNumber() + 1;
                     expectedSequenceNumber++;
                     fileOutputStream.write(packet.getData(dataLength));
                 }
