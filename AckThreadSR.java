@@ -38,7 +38,6 @@ public class AckThreadSR implements Runnable {
                 e.printStackTrace();
             }
 
-            Thread.yield();
 
             int base = Sender2b.getBase();
             int nextSequenceNumber = Sender2b.getNextSequence();

@@ -11,6 +11,7 @@ import java.util.TreeSet;
 
 public class Receiver2b {
         static boolean debug = false;
+        private static boolean endOfFile = false;
         public static void main(String[] args) throws IOException {
             if(args.length != 3 && args.length != 4){
                 System.err.println("Run with arguments <Port> <Filename> <Window Size> <Debug flag (optional)>.");
@@ -88,7 +89,7 @@ public class Receiver2b {
                             System.out.println("Buffering packet with # " + sequenceNumber);
                         }
                     }
-                } else if(sequenceNumber < base - windowSize || sequenceNumber > base - 1) {
+                } else if(sequenceNumber <= base - windowSize || sequenceNumber >= base - 1) {
 //                    Packet is out of bounds where it should be ACKed it, so just continue
                     continue;
                 }
@@ -108,8 +109,12 @@ public class Receiver2b {
                     fileOutputStream.write(packet.getData(dataLength));
                 }
 
+                if(packet.isLastPacket()){
+                    endOfFile = true;
+                }
+
 //            If this is the last packet - close the file stream and change flag
-                if(packet.isLastPacket() && sequenceNumber == expectedSequenceNumber - 1){
+                if(endOfFile && bufferedPackets.size() == 0){
                     endOfFile = true;
                     fileOutputStream.close();
                 }

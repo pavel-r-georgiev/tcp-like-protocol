@@ -84,33 +84,31 @@ public class Sender2b {
 
         while (!endOfFile || running) {
             while (nextSequenceNumber < base + windowSize && !endOfFile) {
-                synchronized (unackedPackets) {
-                    if (debug) {
-                        System.out.println("Base " + base);
-                        System.out.println("Next Seq #" + nextSequenceNumber);
-                    }
+                if(debug){
+                    System.out.printf("Windows [%d %d]%n", base, sequenceNumber);
+                }
 //            Check if this is last packet of the file
-                    int bytesLeft = (int) (file.length() - position);
-                    if (bytesLeft <= 1024) {
-                        endOfFile = true;
-                    }
+                int bytesLeft = (int) (file.length() - position);
+                if (bytesLeft <= 1024) {
+                    endOfFile = true;
+                }
 
 //            If it is last packet reduce buffer size
-                    int dataSize = endOfFile ? bytesLeft : Packet.PACKET_DEFAULT_DATA_SIZE;
+                int dataSize = endOfFile ? bytesLeft : Packet.PACKET_DEFAULT_DATA_SIZE;
 
 //            Read from file and construct a packet to be sent
-                    byte[] data = new byte[dataSize];
-                    fileStream.read(data);
-                    Packet packet = new Packet(data, sequenceNumber, endOfFile);
-                    packets.put(packet.getSequenceNumber(), packet);
-                    DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
+                byte[] data = new byte[dataSize];
+                fileStream.read(data);
+                Packet packet = new Packet(data, sequenceNumber, endOfFile);
+                packets.put(packet.getSequenceNumber(), packet);
+                DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
 
-
+                synchronized (unackedPackets) {
                     unackedPackets.add(sequenceNumber);
-                    clientSocket.send(sendPacket);
                 }
 
                 //                Send the packet
+                clientSocket.send(sendPacket);
                 if(debug){
                     System.out.println("Sending packet #" + sequenceNumber);
                 }
@@ -190,23 +188,11 @@ public class Sender2b {
             if (!unackedPackets.isEmpty()) {
                 base = unackedPackets.first();
             } else {
-                System.out.println(unackedPackets.toString());
+                base = nextSequenceNumber;
             }
         }
     }
 
-    public static synchronized void setBase(int newBase) {
-        base = newBase;
-    }
-
-    public static synchronized boolean isUnackedPacketsEmpty(){
-        return unackedPackets.isEmpty();
-    }
-
-    public static synchronized int firstUnacked() {
-        System.out.println(unackedPackets.toString());
-        return unackedPackets.first();
-    }
     public static synchronized boolean isEndOfFile(){
         return endOfFile;
     }
