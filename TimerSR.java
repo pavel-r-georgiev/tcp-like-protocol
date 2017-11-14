@@ -1,10 +1,12 @@
+import java.io.IOException;
+import java.net.DatagramPacket;
+
 public class TimerSR implements Runnable {
-    public static int sequenceNumber;
+    final private int sequenceNumber;
     private boolean running = true;
-    private long timePast;
-    private int timeout;
-    private long timeCreated;
-    private boolean debug;
+    final private int timeout;
+    final private long timeCreated;
+    final private boolean debug;
 
     public TimerSR(int sequenceNumber){
         this.sequenceNumber = sequenceNumber;
@@ -29,9 +31,25 @@ public class TimerSR implements Runnable {
     }
 
     private synchronized  void timeout() {
+        if(Sender2b.clientSocket.isClosed()){
+            return;
+        }
+
         if(debug){
             System.out.println("Timer timeout for packet # " + sequenceNumber);
         }
-        Sender2b.resendPacket(sequenceNumber);
+        Packet packet = Sender2b.packets.get(sequenceNumber);
+        DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), Sender2b.IPAddress, Sender2b.port);
+
+        try {
+            if(debug){
+                System.out.println("Resending packet # " + sequenceNumber);
+            }
+            Sender2b.clientSocket.send(sendPacket);
+            Sender2b.startTimer(sequenceNumber);
+            Sender2b.checkRetransmissionLimit();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

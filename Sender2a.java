@@ -10,7 +10,7 @@ import java.util.*;
 public class Sender2a {
     public static boolean debug = false;
     public static final int MAXIMUM_CONSECUTIVE_RETRANSMISSIONS = 10;
-    private static int consecutiveRetransmissions = 0;
+    public volatile static int consecutiveRetransmissions = 0;
     public static int windowSize;
     private static int base;
     private static int nextSequenceNumber;

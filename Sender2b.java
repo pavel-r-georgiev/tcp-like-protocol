@@ -4,24 +4,21 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public class Sender2b {
     public static boolean debug = false;
-    public static final int MAXIMUM_CONSECUTIVE_RETRANSMISSIONS = 10;
+    public static final int MAXIMUM_CONSECUTIVE_RETRANSMISSIONS = 20;
     private static int consecutiveRetransmissions = 0;
     public static int windowSize;
     private static int base;
     private static int nextSequenceNumber;
     public static int timeout;
     public static boolean running = true;
-    private static DatagramSocket clientSocket;
-    private static InetAddress IPAddress;
-    private static int port;
+    public static DatagramSocket clientSocket;
+    public static InetAddress IPAddress;
+    public static int port;
     //        Flag to show end of transmitted file
     private static boolean endOfFile = false;
     private static Thread ackThread;
@@ -29,13 +26,10 @@ public class Sender2b {
     public static HashMap<Integer,Packet> packets = new HashMap<Integer,Packet>();
     //   List of unacked packets
     public static volatile ConcurrentSkipListSet<Integer> unackedPackets = new ConcurrentSkipListSet<Integer>();
-//    List of timers
-    public static HashMap<Integer, Thread> timers = new HashMap<Integer, Thread>();
 
-
+    
     //        Variables to keep track of start and end time of transmission
     private static long startTime = 0, endTime = 0;
-
 
 
     public static void main(String[] args) throws IOException {
@@ -76,7 +70,6 @@ public class Sender2b {
 //        Flag to show if packet is first to be transmitted - used to starting the timer
         boolean firstPacket = true;
 
-
         int sequenceNumber = 1;
 
 //        Position in bytes showing progress of transmission of file
@@ -85,7 +78,7 @@ public class Sender2b {
         while (!endOfFile || running) {
             while (nextSequenceNumber < base + windowSize && !endOfFile) {
                 if(debug){
-                    System.out.printf("Windows [%d %d]%n", base, sequenceNumber);
+                    System.out.printf("Windows [%d %d]%n", base, nextSequenceNumber);
                 }
 //            Check if this is last packet of the file
                 int bytesLeft = (int) (file.length() - position);
@@ -113,7 +106,6 @@ public class Sender2b {
                     System.out.println("Sending packet #" + sequenceNumber);
                 }
                 startTimer(sequenceNumber);
-
 
 
                 //                Start timer for throughput measurement
@@ -144,32 +136,13 @@ public class Sender2b {
         System.out.printf("%f %n", throughput);
     }
 
-
-    public static synchronized void resendPacket(int sequenceNumber) {
-        if(debug){
-            System.out.println("Resending packet # " + base);
-        }
-
+    public static synchronized void checkRetransmissionLimit(){
         consecutiveRetransmissions++;
-
-//        If threshold consecutive transmissions reached at end of file end the sender. Last ACK most likely got lost.
         if(consecutiveRetransmissions >= MAXIMUM_CONSECUTIVE_RETRANSMISSIONS && endOfFile){
             running = false;
         }
-
-        Packet packet = packets.get(sequenceNumber);
-        DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
-
-        try {
-            if(debug){
-                System.out.println("Sending packet #" + packet.getSequenceNumber());
-            }
-            clientSocket.send(sendPacket);
-            startTimer(sequenceNumber);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
+
 
     public static synchronized int getBase() {
         return base;
@@ -177,10 +150,11 @@ public class Sender2b {
 
 
     public static synchronized void setAckReceived(int ackSequenceNumber) {
-        consecutiveRetransmissions = 0;
+        synchronized (unackedPackets) {
+            consecutiveRetransmissions = 0;
 //        Mark as ACKed as received
-        unackedPackets.remove(ackSequenceNumber);
-        stopTimer(ackSequenceNumber);
+            unackedPackets.remove(ackSequenceNumber);
+        }
     }
 
     public static synchronized void setBase() {
@@ -201,23 +175,11 @@ public class Sender2b {
         return nextSequenceNumber;
     }
 
-    public static synchronized void stopTimer(int ackSequenceNumber) {
-        if(debug) {
-            System.out.println("Timer stopped for # " + ackSequenceNumber);
-        }
-        Thread timer = timers.get(ackSequenceNumber);
-        if(timer != null) {
-            timer.interrupt();
-        }
-    }
-
     public static synchronized void startTimer(int sequenceNumber) {
         if(debug){
             System.out.println("Timer started for #" + sequenceNumber);
         }
-        Thread timer = new Thread(new TimerSR(sequenceNumber));
-        timers.put(sequenceNumber, timer);
-        timer.start();
+        new Thread(new TimerSR(sequenceNumber)).start();
     }
 
 
