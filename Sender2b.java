@@ -16,6 +16,7 @@ public class Sender2b {
     private static int nextSequenceNumber;
     public static int timeout;
     public static boolean running = true;
+    private static boolean lastAckReceived = false;
     public static DatagramSocket clientSocket;
     public static InetAddress IPAddress;
     public static int port;
@@ -67,6 +68,7 @@ public class Sender2b {
 //        Initialize socket for the sender
         clientSocket = new DatagramSocket();
         ackThread = new Thread(new AckThreadSR());
+        ackThread.setPriority(Thread.MAX_PRIORITY - 1);
         ackThread.start();
         FileInputStream fileStream = new FileInputStream(file);
 
@@ -123,7 +125,12 @@ public class Sender2b {
                 sequenceNumber++;
                 position += 1024;
             }
+
+            if(lastAckReceived && unackedPackets.isEmpty() && endOfFile){
+                shutdown();
+            }
         }
+
         fileStream.close();
 
 //        Get the transfer time in milliseconds
@@ -137,6 +144,17 @@ public class Sender2b {
 
 //        Output retransmissions and throughput
         System.out.printf("%f %n", throughput);
+    }
+
+    private static void shutdown() {
+        if(debug){
+            System.out.println("Closing socket...");
+            System.out.println("Ending ACK Thread...");
+            System.out.println("Ending transmission...");
+        }
+        ackThread.interrupt();
+        clientSocket.close();
+        running = false;
     }
 
     public static synchronized void checkRetransmissionLimit(int sequenceNumber){
@@ -171,8 +189,10 @@ public class Sender2b {
         synchronized (unackedPackets) {
             if (!unackedPackets.isEmpty()) {
                 base = unackedPackets.first();
-            } else {
+            } else if(base != nextSequenceNumber){
                 base = nextSequenceNumber;
+            } else {
+                base = base + 1;
             }
         }
     }
@@ -180,11 +200,7 @@ public class Sender2b {
     public static synchronized boolean isEndOfFile(){
         return endOfFile;
     }
-
-    public static synchronized int getNextSequence() {
-        return nextSequenceNumber;
-    }
-
+    
     public static synchronized void startTimer(int sequenceNumber) {
         if(debug){
             System.out.println("Timer started for #" + sequenceNumber);
@@ -194,12 +210,7 @@ public class Sender2b {
 
 
     public static synchronized void lastAckReceived() {
-        running = false;
-        clientSocket.close();
-    }
-
-    public static synchronized boolean isUnackedEmpty() {
-        return unackedPackets.isEmpty();
+        lastAckReceived = true;
     }
 }
 

@@ -13,25 +13,22 @@ public class AckThreadSR implements Runnable {
 
     @Override
     public void run() {
-        while(running){
+        while(!Thread.currentThread().isInterrupted() && running){
             AckPacket ack = new AckPacket();
             try {
                 DatagramPacket ackPacket = new DatagramPacket(ack.getBuffer(), AckPacket.ACK_BUFFER_LENGTH);
-                if(Sender2b.clientSocket.isClosed()){
-                    break;
+                if(Sender2b.clientSocket.isClosed()) {
+                    running = false;
+                    return;
                 }
                 Sender2b.clientSocket.receive(ackPacket);
-            } catch (SocketTimeoutException e) {
-                e.printStackTrace();
-            } catch (SocketException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException e ) {
+                running = false;
+                return;
             }
 
 
             int base = Sender2b.getBase();
-            int nextSequenceNumber = Sender2b.getNextSequence();
 
             if(Sender2b.isEndOfFile()){
                 fileEnded = true;
@@ -55,10 +52,8 @@ public class AckThreadSR implements Runnable {
                     Sender2b.setBase();
                 }
 
-                if(fileEnded && base == Sender2b.lastSequenceNumber && Sender2b.isUnackedEmpty()){
+                if(ackSequenceNumber == Sender2b.lastSequenceNumber + 1){
                     Sender2b.lastAckReceived();
-                    running = false;
-                    break;
                 }
             }
             Thread.yield();

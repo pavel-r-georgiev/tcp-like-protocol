@@ -111,7 +111,6 @@ public class Receiver2b {
                 if(packet.isLastPacket()){
                     fileEnded = true;
                     lastSequenceNumber = packet.getSequenceNumber();
-                    System.out.println(lastSequenceNumber);
                 }
 
 //            If this is the last packet - close the file stream and change flag
