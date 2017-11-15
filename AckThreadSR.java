@@ -6,31 +6,21 @@ import java.net.SocketTimeoutException;
 import java.util.HashSet;
 
 public class AckThreadSR implements Runnable {
-    private DatagramSocket serverSocket;
-    private int lastSequenceNumber;
     private boolean running = true;
     public static HashSet<Integer> receivedAcks = new HashSet<Integer>();
-    private boolean debug;
+    private boolean debug = Sender2b.debug;
     private boolean fileEnded;
-
-    public AckThreadSR(int ackPort) {
-        try {
-            serverSocket = new DatagramSocket(ackPort);
-            serverSocket.setSoTimeout(0);
-            debug = Sender2b.debug;
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
     public void run() {
         while(running){
             AckPacket ack = new AckPacket();
             try {
-                serverSocket.setSoTimeout(0);
                 DatagramPacket ackPacket = new DatagramPacket(ack.getBuffer(), AckPacket.ACK_BUFFER_LENGTH);
-                serverSocket.receive(ackPacket);
+                if(Sender2b.clientSocket.isClosed()){
+                    break;
+                }
+                Sender2b.clientSocket.receive(ackPacket);
             } catch (SocketTimeoutException e) {
                 e.printStackTrace();
             } catch (SocketException e) {
@@ -44,7 +34,7 @@ public class AckThreadSR implements Runnable {
             int nextSequenceNumber = Sender2b.getNextSequence();
 
             if(Sender2b.isEndOfFile()){
-                fileEnded = true ;
+                fileEnded = true;
             }
 
             int ackSequenceNumber = ack.getSequenceNumber();
@@ -65,7 +55,7 @@ public class AckThreadSR implements Runnable {
                     Sender2b.setBase();
                 }
 
-                if(fileEnded && base == nextSequenceNumber - 1){
+                if(fileEnded && base == Sender2b.lastSequenceNumber && Sender2b.isUnackedEmpty()){
                     Sender2b.lastAckReceived();
                     running = false;
                     break;
@@ -73,7 +63,5 @@ public class AckThreadSR implements Runnable {
             }
             Thread.yield();
         }
-
-        serverSocket.close();
     }
 }

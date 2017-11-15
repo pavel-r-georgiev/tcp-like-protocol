@@ -6,30 +6,18 @@ import java.net.SocketTimeoutException;
 import java.util.HashSet;
 
 public class AckThreadGBN implements Runnable {
-    private DatagramSocket serverSocket;
     private boolean endOfFile = false;
     private boolean running = true;
     public static HashSet<Integer> receivedAcks = new HashSet<Integer>();
-    private boolean debug;
-
-    public AckThreadGBN(int ackPort) {
-        try {
-            serverSocket = new DatagramSocket(ackPort);
-            serverSocket.setSoTimeout(0);
-            debug = Sender2a.debug;
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
-    }
+    private boolean debug = Sender2a.debug;
 
     @Override
     public void run() {
         while(running){
             AckPacket ack = new AckPacket();
                 try {
-                    serverSocket.setSoTimeout(0);
                     DatagramPacket ackPacket = new DatagramPacket(ack.getBuffer(), AckPacket.ACK_BUFFER_LENGTH);
-                    serverSocket.receive(ackPacket);
+                    Sender2a.clientSocket.receive(ackPacket);
                 } catch (SocketTimeoutException e) {
                     e.printStackTrace();
                 } catch (SocketException e) {
@@ -78,7 +66,5 @@ public class AckThreadGBN implements Runnable {
                 }
             Thread.yield();
         }
-
-        serverSocket.close();
     }
 }

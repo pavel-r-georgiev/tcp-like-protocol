@@ -12,6 +12,8 @@ import java.util.TreeSet;
 public class Receiver2b {
         static boolean debug = false;
         private static boolean endOfFile = false;
+        private static boolean fileEnded = false;
+        private static int lastSequenceNumber = 0;
         public static void main(String[] args) throws IOException {
             if(args.length != 3 && args.length != 4){
                 System.err.println("Run with arguments <Port> <Filename> <Window Size> <Debug flag (optional)>.");
@@ -59,9 +61,7 @@ public class Receiver2b {
 
 //            Get IP and port of sender - used to send ACKs back
                 InetAddress IPAddress = receivedPacket.getAddress();
-                int clientPort = port + 1;
-
-//              int clientPort = receivedPacket.getPort();
+                int clientPort = receivedPacket.getPort();
 //            Get the true length of data received and sequence number of packet
                 int dataLength = receivedPacket.getLength();
                 int sequenceNumber = packet.getSequenceNumber();
@@ -109,15 +109,16 @@ public class Receiver2b {
                 }
 
                 if(packet.isLastPacket()){
-                    endOfFile = true;
+                    fileEnded = true;
+                    lastSequenceNumber = packet.getSequenceNumber();
+                    System.out.println(lastSequenceNumber);
                 }
 
 //            If this is the last packet - close the file stream and change flag
-                if(endOfFile && bufferedPackets.size() == 0 && base == expectedSequenceNumber - 1){
+                if(fileEnded && bufferedPackets.size() == 0 && base == lastSequenceNumber + 1){
                     endOfFile = true;
                     fileOutputStream.close();
                 }
-
             }
 
             serverSocket.close();

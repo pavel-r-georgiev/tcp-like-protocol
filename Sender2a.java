@@ -16,7 +16,7 @@ public class Sender2a {
     private volatile static int nextSequenceNumber;
     public static int timeout;
     public static boolean running = true;
-    private static DatagramSocket clientSocket;
+    public static DatagramSocket clientSocket;
     private static InetAddress IPAddress;
     private static int port;
 //        Flag to show end of transmitted file
@@ -51,8 +51,6 @@ public class Sender2a {
         base = 1;
         nextSequenceNumber = 1;
 
-        Thread ackThread = new Thread(new AckThreadGBN(port + 1));
-        ackThread.start();
         sendFile(file);
 
         if(debug){
@@ -65,6 +63,9 @@ public class Sender2a {
     private static void sendFile(File file) throws IOException {
 //        Initialize socket for the sender
         clientSocket = new DatagramSocket();
+        Thread ackThread = new Thread(new AckThreadGBN());
+        ackThread.start();
+
         FileInputStream fileStream = new FileInputStream(file);
 
 //        Flag to show if packet is first to be transmitted - used to starting the timer
@@ -124,7 +125,6 @@ public class Sender2a {
             }
         }
             fileStream.close();
-            clientSocket.close();
 
 //        Get the transfer time in milliseconds
         long elapsedTime = (endTime  - startTime);
@@ -218,5 +218,6 @@ public class Sender2a {
 
     public static synchronized void lastAckReceived() {
         running = false;
+        clientSocket.close();
     }
 }

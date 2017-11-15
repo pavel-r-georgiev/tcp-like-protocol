@@ -19,6 +19,7 @@ public class Sender2b {
     public static DatagramSocket clientSocket;
     public static InetAddress IPAddress;
     public static int port;
+    public static int lastSequenceNumber;
     //        Flag to show end of transmitted file
     private static boolean endOfFile = false;
     private static Thread ackThread;
@@ -53,8 +54,6 @@ public class Sender2b {
         base = 1;
         nextSequenceNumber = 1;
 
-        ackThread = new Thread(new AckThreadSR(port + 1));
-        ackThread.start();
         sendFile(file);
 
         if(debug){
@@ -67,6 +66,8 @@ public class Sender2b {
     private static void sendFile(File file) throws IOException {
 //        Initialize socket for the sender
         clientSocket = new DatagramSocket();
+        ackThread = new Thread(new AckThreadSR());
+        ackThread.start();
         FileInputStream fileStream = new FileInputStream(file);
 
 //        Flag to show if packet is first to be transmitted - used to starting the timer
@@ -86,6 +87,7 @@ public class Sender2b {
                 int bytesLeft = (int) (file.length() - position);
                 if (bytesLeft <= 1024) {
                     endOfFile = true;
+                    lastSequenceNumber = sequenceNumber;
                 }
 
 //            If it is last packet reduce buffer size
@@ -123,7 +125,6 @@ public class Sender2b {
             }
         }
         fileStream.close();
-        clientSocket.close();
 
 //        Get the transfer time in milliseconds
         long elapsedTime = (endTime  - startTime);
@@ -194,5 +195,11 @@ public class Sender2b {
 
     public static synchronized void lastAckReceived() {
         running = false;
+        clientSocket.close();
+    }
+
+    public static synchronized boolean isUnackedEmpty() {
+        return unackedPackets.isEmpty();
     }
 }
+
