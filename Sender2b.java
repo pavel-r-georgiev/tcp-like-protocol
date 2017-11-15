@@ -20,7 +20,7 @@ public class Sender2b {
     public static DatagramSocket clientSocket;
     public static InetAddress IPAddress;
     public static int port;
-    public static int lastSequenceNumber;
+    public static volatile int lastSequenceNumber;
     //        Flag to show end of transmitted file
     private static boolean endOfFile = false;
     private static Thread ackThread;
@@ -200,7 +200,7 @@ public class Sender2b {
     public static synchronized boolean isEndOfFile(){
         return endOfFile;
     }
-    
+
     public static synchronized void startTimer(int sequenceNumber) {
         if(debug){
             System.out.println("Timer started for #" + sequenceNumber);

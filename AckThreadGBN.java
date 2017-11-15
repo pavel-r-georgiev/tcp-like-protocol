@@ -6,32 +6,29 @@ import java.net.SocketTimeoutException;
 import java.util.HashSet;
 
 public class AckThreadGBN implements Runnable {
-    private boolean endOfFile = false;
     private boolean running = true;
     public static HashSet<Integer> receivedAcks = new HashSet<Integer>();
     private boolean debug = Sender2a.debug;
 
     @Override
     public void run() {
-        while(running){
+        while(!Thread.currentThread().isInterrupted() && running){
+            if(Sender2a.clientSocket.isClosed()) {
+                running = false;
+                return;
+            }
+
             AckPacket ack = new AckPacket();
                 try {
                     DatagramPacket ackPacket = new DatagramPacket(ack.getBuffer(), AckPacket.ACK_BUFFER_LENGTH);
                     Sender2a.clientSocket.receive(ackPacket);
-                } catch (SocketTimeoutException e) {
-                    e.printStackTrace();
-                } catch (SocketException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (IOException e ) {
+                    running = false;
+                    return;
                 }
 
                 int base = Sender2a.getBase();
                 int nextSequenceNumber = Sender2a.getNextSequence();
-
-                if(Sender2a.isEndOfFile()){
-                    endOfFile = true;
-                }
 
                 int ackSequenceNumber = ack.getSequenceNumber();
 
@@ -45,16 +42,13 @@ public class AckThreadGBN implements Runnable {
                     // Inform Sender thread that ack is received
                     Sender2a.ackReceived();
 
-                    base = ackSequenceNumber + 1;
-
-                    if(endOfFile && base == nextSequenceNumber){
-                        Sender2a.stopTimer();
+                    if(Sender2a.isEndOfFile() && ackSequenceNumber == Sender2a.lastSequenceNumber){
                         Sender2a.lastAckReceived();
                         running = false;
                         break;
                     }
 
-
+                    base = ackSequenceNumber + 1;
                     // Change base
                     Sender2a.setBase(base);
 

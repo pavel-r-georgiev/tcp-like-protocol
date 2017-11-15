@@ -21,12 +21,15 @@ public class Sender2a {
     private static int port;
 //        Flag to show end of transmitted file
     private static volatile boolean endOfFile = false;
+    public static volatile int lastSequenceNumber;
 //   Memory reference to the packets. Used for retransmission of packets.
     public static HashMap<Integer,Packet> packets = new HashMap<Integer,Packet>();
 //   Future for callable
     private static Thread timer = null;
     //        Variables to keep track of start and end time of transmission
     private static long startTime = 0, endTime = 0;
+    private static boolean lastAckReceived = false;
+    private static Thread ackThread;
 
 
 
@@ -63,7 +66,7 @@ public class Sender2a {
     private static void sendFile(File file) throws IOException {
 //        Initialize socket for the sender
         clientSocket = new DatagramSocket();
-        Thread ackThread = new Thread(new AckThreadGBN());
+        ackThread = new Thread(new AckThreadGBN());
         ackThread.start();
 
         FileInputStream fileStream = new FileInputStream(file);
@@ -83,6 +86,7 @@ public class Sender2a {
                 int bytesLeft = (int) (file.length() - position);
                 if (bytesLeft <= 1024) {
                     endOfFile = true;
+                    lastSequenceNumber = sequenceNumber;
                 }
 
                 if(debug){
@@ -122,6 +126,10 @@ public class Sender2a {
 
                 sequenceNumber++;
                 position += 1024;
+            }
+
+            if(lastAckReceived && endOfFile){
+                shutdown();
             }
         }
             fileStream.close();
@@ -217,7 +225,19 @@ public class Sender2a {
     }
 
     public static synchronized void lastAckReceived() {
-        running = false;
-        clientSocket.close();
+        stopTimer();
+        lastAckReceived = true;
     }
+
+    private static void shutdown() {
+        if(debug){
+            System.out.println("Closing socket...");
+            System.out.println("Ending ACK Thread...");
+            System.out.println("Ending transmission...");
+        }
+        clientSocket.close();
+        ackThread.interrupt();
+        running = false;
+    }
+
 }
