@@ -157,10 +157,10 @@ public class Sender2a {
 
 //        If threshold consecutive transmissions reached at end of file end the sender. Last ACK most likely got lost.
         if(consecutiveRetransmissions >= MAXIMUM_CONSECUTIVE_RETRANSMISSIONS && endOfFile){
-            running = false;
             if(debug){
                 System.out.println("Maximum retransmissions reached.");
             }
+            shutdown();
             return;
         }
 

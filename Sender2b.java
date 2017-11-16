@@ -102,9 +102,7 @@ public class Sender2b {
                 packets.put(packet.getSequenceNumber(), packet);
                 DatagramPacket sendPacket = new DatagramPacket(packet.getBuffer(), packet.getBufferSize(), IPAddress, port);
 
-                synchronized (unackedPackets) {
-                    unackedPackets.add(sequenceNumber);
-                }
+                unackedPackets.add(sequenceNumber);
 
                 //                Send the packet
                 clientSocket.send(sendPacket);
@@ -167,7 +165,10 @@ public class Sender2b {
         int consecutiveRetransmissions = retransmissions.get(sequenceNumber);
 
         if(consecutiveRetransmissions >= MAXIMUM_CONSECUTIVE_RETRANSMISSIONS && endOfFile){
-            running = false;
+            if(debug){
+                System.out.println("Maximum retransmissions reached.");
+            }
+            shutdown();
         }
     }
 
@@ -179,21 +180,17 @@ public class Sender2b {
 
     public static synchronized void setAckReceived(int ackSequenceNumber) {
         endTime = System.currentTimeMillis();
-        synchronized (unackedPackets) {
 //        Mark as ACKed as received
-            unackedPackets.remove(ackSequenceNumber);
-        }
+        unackedPackets.remove(ackSequenceNumber);
     }
 
     public static synchronized void setBase() {
-        synchronized (unackedPackets) {
-            if (!unackedPackets.isEmpty()) {
-                base = unackedPackets.first();
-            } else if(base != nextSequenceNumber){
-                base = nextSequenceNumber;
-            } else {
-                base = base + 1;
-            }
+        if (!unackedPackets.isEmpty()) {
+            base = unackedPackets.first();
+        } else if(base != nextSequenceNumber){
+            base = nextSequenceNumber;
+        } else {
+            base = base + 1;
         }
     }
 

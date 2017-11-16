@@ -46,6 +46,9 @@ public class AckThreadSR implements Runnable {
                 }
 
                 if(Sender2b.isEndOfFile() && ackSequenceNumber == Sender2b.lastSequenceNumber){
+                    if(debug){
+                        System.out.println("Last ACK received: #" + ackSequenceNumber);
+                    }
                     Sender2b.lastAckReceived();
                 }
             }

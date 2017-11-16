@@ -79,6 +79,9 @@ public class Receiver2b {
                     if(sequenceNumber == expectedSequenceNumber){
 //              Write the data to the file output stream after stripping away the header and EoF bits.
                         fileOutputStream.write(packet.getData(dataLength));
+                        if(debug){
+                            System.out.println("Writing packet #" + sequenceNumber);
+                        }
                         expectedSequenceNumber++;
                         base = sequenceNumber + 1;
                     } else {
@@ -101,8 +104,11 @@ public class Receiver2b {
                 }
 
 //                Check for buffered packets that can written to file after received packet
-                while (bufferedPackets.size() > 0 && bufferedPackets.first().getSequenceNumber() == expectedSequenceNumber) {
+                while (!bufferedPackets.isEmpty() && bufferedPackets.first().getSequenceNumber() == expectedSequenceNumber) {
                     packet = bufferedPackets.pollFirst();
+                    if(debug){
+                        System.out.println("Writing packet # " + packet.getSequenceNumber());
+                    }
                     base = packet.getSequenceNumber() + 1;
                     expectedSequenceNumber++;
                     fileOutputStream.write(packet.getData(dataLength));
