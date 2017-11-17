@@ -1,3 +1,4 @@
+/* Pavel Georgiev s1525701 */
 public class TimerGBN implements Runnable {
     final private int sequenceNumber;
     private boolean running = true;

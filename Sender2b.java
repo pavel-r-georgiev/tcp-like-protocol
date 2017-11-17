@@ -1,3 +1,4 @@
+/* Pavel Georgiev s1525701 */
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
