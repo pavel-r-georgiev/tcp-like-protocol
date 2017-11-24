@@ -6,6 +6,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public class Sender2b {
@@ -29,6 +31,8 @@ public class Sender2b {
     public static HashMap<Integer,Packet> packets = new HashMap<Integer,Packet>();
     //   List of unacked packets
     public static volatile ConcurrentSkipListSet<Integer> unackedPackets = new ConcurrentSkipListSet<Integer>();
+//    List of timers
+    private  static volatile ConcurrentHashMap<Integer, Timer> timers = new ConcurrentHashMap<Integer, Timer>();
 
 
     //        Variables to keep track of start and end time of transmission
@@ -183,6 +187,7 @@ public class Sender2b {
         endTime = System.currentTimeMillis();
 //        Mark as ACKed as received
         unackedPackets.remove(ackSequenceNumber);
+        timers.get(ackSequenceNumber).cancel();
     }
 
     public static synchronized void setBase() {
@@ -203,7 +208,16 @@ public class Sender2b {
         if(debug){
             System.out.println("Timer started for #" + sequenceNumber);
         }
-        new Thread(new TimerSR(sequenceNumber)).start();
+
+        Timer timer;
+        if(timers.containsKey(sequenceNumber)){
+            timer = timers.get(sequenceNumber);
+        } else {
+            timer =  new Timer(true);
+            timers.put(sequenceNumber, timer);
+        }
+//        Schedule timeout task for the given sequence number
+        timer.schedule(new Timeout(sequenceNumber), timeout);
     }
 
 

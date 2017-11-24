@@ -1,34 +1,19 @@
-/* Pavel Georgiev s1525701 */
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.TimerTask;
 
-public class TimerSR implements Runnable {
+public class Timeout extends TimerTask {
     final private int sequenceNumber;
-    private boolean running = true;
-    final private int timeout;
-    final private long timeCreated;
     final private boolean debug;
 
-    public TimerSR(int sequenceNumber){
+    public Timeout(int sequenceNumber){
         this.sequenceNumber = sequenceNumber;
-        this.timeout = Sender2b.timeout;
         this.debug = Sender2b.debug;
-        this.timeCreated = System.currentTimeMillis();
     }
 
-    @Override
-    public void run() {
-        while (!Thread.currentThread().isInterrupted() && running) {
-            if (AckThreadSR.receivedAcks.contains(sequenceNumber)) {
-                running = false;
-                break;
-            }
 
-            if(System.currentTimeMillis() - timeCreated >= timeout){
-                timeout();
-                running = false;
-            }
-        }
+    public void run() {
+        timeout();
     }
 
     private synchronized  void timeout() {
@@ -54,3 +39,4 @@ public class TimerSR implements Runnable {
         }
     }
 }
+
